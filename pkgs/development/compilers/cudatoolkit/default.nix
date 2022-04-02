@@ -90,5 +90,7 @@ rec {
   # latest cudnn, nccl, cutensor, etc! It sometimes happens that CUDA versions
   # are released prior to compatibility with the rest of the ecosystem. And
   # don't forget to request a review from @NixOS/cuda-maintainers!
-  cudatoolkit_11 = cudatoolkit_11_5;
+  #
+  # The last cudatooklit with which pytorch (at the time of writing: 1.10) succeeds to build
+  cudatoolkit_11 = cudatoolkit_11_4;
 }
