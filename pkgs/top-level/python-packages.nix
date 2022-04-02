@@ -8330,7 +8330,7 @@ in {
 
   pytorch =
     let
-      cudnn = pkgs.cudnn_8_3_cudatoolkit_11_3;
+      cudnn = pkgs.cudnn_8_3_cudatoolkit_11_4;
       cudatoolkit = cudnn.cudatoolkit;
       magma = pkgs.magma.override { inherit cudatoolkit; };
       nccl = pkgs.nccl.override { inherit cudatoolkit; };
