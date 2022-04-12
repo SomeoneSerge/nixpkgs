@@ -1,13 +1,16 @@
 { lib
 , config
 , fetchFromGitHub
+, symlinkJoin
 , stdenv
 , cmake
 , cudaPackages
 , cudaSupport ? config.cudaSupport or false
 , cudaCapabilities ? [ "60" "70" "80" "86" ]
 , pythonSupport ? true
+, nvidia-thrust
 , pythonPackages
+, boost
 , blas
 , swig
 , addOpenGLRunpath
@@ -23,10 +26,20 @@
 , runCommand
 }:
 
+assert cudaSupport -> nvidia-thrust.cudaSupport;
+
 let
   pname = "faiss";
   version = "1.7.2";
-  inherit (cudaPackages) cudatoolkit;
+  cudaJoined = symlinkJoin {
+    name = "cuda-packages-unsplit";
+    paths = with cudaPackages; [
+      cuda_cudart # cuda_runtime.h
+      libcublas
+      libcurand
+      cuda_nvprof # cuda_profiler_api.h
+    ];
+  };
 in
 stdenv.mkDerivation {
   inherit pname version;
@@ -47,6 +60,9 @@ stdenv.mkDerivation {
     pythonPackages.setuptools
     pythonPackages.pip
     pythonPackages.wheel
+  ] ++ lib.optionals cudaSupport [
+    cudaJoined
+    nvidia-thrust
   ];
 
   propagatedBuildInputs = lib.optionals pythonSupport [
@@ -54,7 +70,7 @@ stdenv.mkDerivation {
   ];
 
   nativeBuildInputs = [ cmake ] ++ lib.optionals cudaSupport [
-    cudatoolkit
+    cudaPackages.cuda_nvcc
     addOpenGLRunpath
   ] ++ lib.optional pythonSupport [
     pythonPackages.python
@@ -70,6 +86,7 @@ stdenv.mkDerivation {
     "-DFAISS_OPT_LEVEL=${optLevel}"
   ] ++ lib.optionals cudaSupport [
     "-DCMAKE_CUDA_ARCHITECTURES=${lib.concatStringsSep ";" cudaCapabilities}"
+    "-DCUDAToolkit_INCLUDE_DIR=${cudaJoined}/include"
   ];
 
 
