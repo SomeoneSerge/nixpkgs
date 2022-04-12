@@ -33693,6 +33693,11 @@ with pkgs;
     swig = swig4;
   };
 
+  faissWithCuda = faiss.override {
+    cudaSupport = true;
+    nvidia-thrust = nvidia-thrust-cuda;
+  };
+
   fityk = callPackage ../applications/science/misc/fityk { };
 
   galario = callPackage ../development/libraries/galario { };
