@@ -9433,11 +9433,12 @@ with pkgs;
   nvidia-thrust = callPackage ../development/libraries/nvidia-thrust { };
 
   nvidia-thrust-intel = callPackage ../development/libraries/nvidia-thrust {
-    enableTbb = true;
+    hostSystem = "TBB";
+    deviceSystem = if config.cudaSupport or false then "CUDA" else "TBB";
   };
 
   nvidia-thrust-cuda = callPackage ../development/libraries/nvidia-thrust {
-    cudaSupport = true;
+    deviceSystem = "CUDA";
   };
 
   miller = callPackage ../tools/text/miller { };
