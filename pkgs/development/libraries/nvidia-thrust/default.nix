@@ -35,9 +35,13 @@ let
     name = "cuda-packages-unsplit";
     paths = with cudaPackages; [
       cuda_nvcc
+      cuda_nvrtc # symbols: cudaLaunchDevice, &c; notice postBuild
       cuda_cudart # cuda_runtime.h
       libcublas
     ];
+    postBuild = ''
+      ln -s $out/lib $out/lib64
+    '';
   };
 in
 stdenv.mkDerivation {
@@ -59,13 +63,7 @@ stdenv.mkDerivation {
   ] ++ lib.optionals cudaSupport [
     # Goes in native build inputs because thrust looks for headers
     # in a path relative to nvcc...
-
-    # Works when build=host, but we only support
-    # cuda on x86_64 anyway
-
-    # TODO: but instead using this
-    # cudaJoined
-    cudaPackages.cudatoolkit
+    cudaJoined
   ];
 
   cmakeFlags = [
@@ -75,7 +73,7 @@ stdenv.mkDerivation {
   ];
 
   passthru = {
-    inherit cudaSupport cudaPackages;
+    inherit cudaSupport cudaPackages cudaJoined;
   };
 
   meta = with lib; {
