@@ -8,7 +8,6 @@
 , cudaSupport ? config.cudaSupport or false
 , cudaCapabilities ? [ "60" "70" "80" "86" ]
 , pythonSupport ? true
-, nvidia-thrust
 , pythonPackages
 , boost
 , blas
@@ -26,8 +25,6 @@
 , runCommand
 }:
 
-assert cudaSupport -> nvidia-thrust.cudaSupport;
-
 let
   pname = "faiss";
   version = "1.7.2";
@@ -37,6 +34,7 @@ let
       cuda_cudart # cuda_runtime.h
       libcublas
       libcurand
+      cuda_cccl
       cuda_nvprof # cuda_profiler_api.h
     ];
   };
@@ -62,7 +60,6 @@ stdenv.mkDerivation {
     pythonPackages.wheel
   ] ++ lib.optionals cudaSupport [
     cudaJoined
-    nvidia-thrust
   ];
 
   propagatedBuildInputs = lib.optionals pythonSupport [
