@@ -1435,32 +1435,6 @@
       </listitem>
       <listitem>
         <para>
-          The interface of <literal>cudnn</literal> has changed:
-        </para>
-        <itemizedlist spacing="compact">
-          <listitem>
-            <para>
-              The package now needs to be called with individual
-              cuda-redist packages from <literal>cudaPackages</literal>
-              namespace, like <literal>libcublas</literal>.
-            </para>
-          </listitem>
-          <listitem>
-            <para>
-              It does not anymore include <literal>cudatoolkit</literal>
-              in <literal>propagatedBuildInputs</literal>
-            </para>
-          </listitem>
-        </itemizedlist>
-        <para>
-          This is part of migration to the redistributable
-          <literal>cudaPackages</literal>. Downstream packages are now
-          to consume the entire <literal>cudaPackages</literal> rather
-          than <literal>cudnn</literal> directly.
-        </para>
-      </listitem>
-      <listitem>
-        <para>
           The <literal>services.bookstack.cacheDir</literal> option has
           been removed, since the cache directory is now handled by
           systemd.
