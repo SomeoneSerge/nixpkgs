@@ -75,6 +75,11 @@ stdenv.mkDerivation {
     runHook postInstall
   '';
 
+  # Otherwise autoPatchelf forgets $ORIGIN
+  postFixup = ''
+    patchelf $out/lib/libcudnn.so --add-needed libcudnn_cnn_infer.so
+  '';
+
   passthru = {
     cudatoolkit = lib.warn ''
       cudnn.cudatoolkit passthru attribute is deprecated;
