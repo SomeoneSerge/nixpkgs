@@ -35,8 +35,6 @@ stdenv.mkDerivation {
   name = "cudatoolkit-${cudaMajorVersion}-cudnn-${version}";
 
   inherit version;
-  # It's often the case that the src depends on the version of cudatoolkit it's
-  # being linked against, so we pass in `cudatoolkit` as an argument to `mkSrc`.
   src = fetchurl {
     inherit url hash sha256;
   };
