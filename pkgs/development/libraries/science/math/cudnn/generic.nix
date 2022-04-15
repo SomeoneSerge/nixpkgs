@@ -89,7 +89,7 @@ stdenv.mkDerivation {
     # official version constraints (as recorded in default.nix). In some cases
     # you _may_ be able to smudge version constraints, just know that you're
     # embarking into unknown and unsupported territory when doing so.
-    broken = !(elem cudaPackages.cudatoolkit.majorMinorVersion supportedCudaVersions);
+    broken = !(elem cudaPackages.cudaVersion supportedCudaVersions);
     description = "NVIDIA CUDA Deep Neural Network library (cuDNN)";
     homepage = "https://developer.nvidia.com/cudnn";
     license = licenses.unfree;
