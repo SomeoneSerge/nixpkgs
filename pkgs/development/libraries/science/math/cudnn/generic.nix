@@ -3,8 +3,8 @@
 , zlib
 , cudaVersion
 , cudaMajorVersion
-, cudatoolkit # only used for .cc
-, libcublas
+, cudatoolkit # if cuda>=11: only used for .cc
+, libcublas ? null # cuda <11 doesn't ship redist packages
 , autoPatchelfHook
 , autoAddOpenGLRunpathHook
 , fetchurl
@@ -32,6 +32,9 @@ let
 
   majorMinorPatch = version: lib.concatStringsSep "." (lib.take 3 (lib.splitVersion version));
   version = majorMinorPatch fullVersion;
+
+  useRedist = libcublas != null;
+  cudaDeps = if useRedist then [ libcublas ] else [ cudatoolkit ];
 in
 stdenv.mkDerivation {
   name = "cudatoolkit-${cudaMajorVersion}-cudnn-${version}";
@@ -42,9 +45,7 @@ stdenv.mkDerivation {
   };
 
   # Check and normalize Runpath against DT_NEEDED using autoPatchelf.
-  # Prepend /run/opengl-driver/lib using addOpenGLRunpath
-  # so that libcuda (which is not part of DT_NEEDED)
-  # can be found at runtime with dlopen().
+  # Prepend /run/opengl-driver/lib using addOpenGLRunpath for dlopen("libcudacuda.so")
   nativeBuildInputs = [
     autoPatchelfHook
     autoAddOpenGLRunpathHook
@@ -53,9 +54,8 @@ stdenv.mkDerivation {
   # Used by autoPatchelfHook
   buildInputs = builtins.map lib.getLib [
     cc.cc # libstdc++
-    libcublas
     zlib
-  ];
+  ] ++ cudaDeps;
 
   # We used to patch Runpath here, but now we use autoPatchelfHook
   #
