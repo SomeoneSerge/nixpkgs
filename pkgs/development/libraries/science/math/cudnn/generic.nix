@@ -1,7 +1,10 @@
 { stdenv
 , lib
 , zlib
-, cudaPackages
+, cudaVersion
+, cudaMajorVersion
+, cudatoolkit # only used for .cc
+, libcublas
 , autoPatchelfHook
 , autoAddOpenGLRunpathHook
 , fetchurl
@@ -25,8 +28,7 @@
 assert (hash != null) || (sha256 != null);
 
 let
-  inherit (cudaPackages) cudaMajorVersion libcublas;
-  inherit (cudaPackages.cudatoolkit) cc;
+  inherit (cudatoolkit) cc;
 
   majorMinorPatch = version: lib.concatStringsSep "." (lib.take 3 (lib.splitVersion version));
   version = majorMinorPatch fullVersion;
@@ -74,8 +76,11 @@ stdenv.mkDerivation {
   '';
 
   passthru = {
-    cudatoolkit = lib.warn "cudnn.cudatoolkit passthru attribute is deprecated: use cudaPackages" cudaPackages.cudatoolkit;
-    inherit cudaPackages;
+    cudatoolkit = lib.warn ''
+      cudnn.cudatoolkit passthru attribute is deprecated;
+      if your derivation uses cudnn directly, it should probably consume cudaPackages instead
+    ''
+      cudatoolkit;
 
     majorVersion = lib.versions.major version;
   };
@@ -86,7 +91,7 @@ stdenv.mkDerivation {
     # official version constraints (as recorded in default.nix). In some cases
     # you _may_ be able to smudge version constraints, just know that you're
     # embarking into unknown and unsupported territory when doing so.
-    broken = !(elem cudaPackages.cudaVersion supportedCudaVersions);
+    broken = !(elem cudaVersion supportedCudaVersions);
     description = "NVIDIA CUDA Deep Neural Network library (cuDNN)";
     homepage = "https://developer.nvidia.com/cudnn";
     license = licenses.unfree;
