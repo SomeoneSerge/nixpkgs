@@ -1,6 +1,7 @@
 { stdenv
 , lib
 , zlib
+, autoPatchelfHook
 , cudaPackages
 , fetchurl
 , addOpenGLRunpath
@@ -39,7 +40,7 @@ in stdenv.mkDerivation {
     inherit url hash sha256;
   };
 
-  nativeBuildInputs = [ addOpenGLRunpath ];
+  nativeBuildInputs = [ autoPatchelfHook addOpenGLRunpath ];
 
   # Some cuDNN libraries depend on things in cudatoolkit, eg.
   # libcudnn_ops_infer.so.8 tries to load libcublas.so.11. So we need to patch
@@ -70,17 +71,13 @@ in stdenv.mkDerivation {
     runHook postInstall
   '';
 
-  doInstallCheck = true;
-  installCheckPhase = ''
-    ! find -iname '*.so' -exec ldd {} + | grep 'not found'
-  '';
-
   # Set RUNPATH so that libcuda in /run/opengl-driver(-32)/lib can be found.
   # See the explanation in addOpenGLRunpath.
-  postFixup = ''
-    for lib in $out/lib/lib*.so; do
-      addOpenGLRunpath $lib
-    done
+  #
+  # Running in installCheckPhase because it should go after autoPatchelf's postFixup
+  doInstallCheck = true;
+  installCheckPhase = ''
+    addOpenGLRunpath $out/lib/lib*.so
   '';
 
   passthru = {
