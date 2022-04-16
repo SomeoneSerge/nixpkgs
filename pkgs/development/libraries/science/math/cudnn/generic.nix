@@ -37,7 +37,8 @@ let
   cudaDeps = if useRedist then [ libcublas ] else [ cudatoolkit ];
 in
 stdenv.mkDerivation {
-  name = "cudatoolkit-${cudaMajorVersion}-cudnn-${version}";
+  pname = "cudatoolkit-${cudaMajorVersion}-cudnn";
+  inherit version;
 
   inherit version;
   src = fetchurl {
