@@ -1,6 +1,7 @@
 { stdenv
 , lib
 , zlib
+, useCudatoolkitRunfile ? false
 , cudaVersion
 , cudaMajorVersion
 , cudatoolkit # if cuda>=11: only used for .cc
@@ -27,20 +28,18 @@
 
 assert (hash != null) || (sha256 != null);
 
+assert useCudatoolkitRunfile || (libcublas != null);
+
 let
   inherit (cudatoolkit) cc;
 
   majorMinorPatch = version: lib.concatStringsSep "." (lib.take 3 (lib.splitVersion version));
   version = majorMinorPatch fullVersion;
-
-  useRedist = libcublas != null;
-  cudaDeps = if useRedist then [ libcublas ] else [ cudatoolkit ];
 in
 stdenv.mkDerivation {
   pname = "cudatoolkit-${cudaMajorVersion}-cudnn";
   inherit version;
 
-  inherit version;
   src = fetchurl {
     inherit url hash sha256;
   };
@@ -56,7 +55,10 @@ stdenv.mkDerivation {
   buildInputs = builtins.map lib.getLib [
     cc.cc # libstdc++
     zlib
-  ] ++ cudaDeps;
+    libcublas # may be null
+  ] ++ lib.optionals useCudatoolkitRunfile [
+    cudatoolkit
+  ];
 
   # We used to patch Runpath here, but now we use autoPatchelfHook
   #
@@ -100,6 +102,7 @@ stdenv.mkDerivation {
     broken = !(elem cudaVersion supportedCudaVersions);
     description = "NVIDIA CUDA Deep Neural Network library (cuDNN)";
     homepage = "https://developer.nvidia.com/cudnn";
+    # TODO: consider marking unfreRedistributable when not using runfile
     license = licenses.unfree;
     platforms = [ "x86_64-linux" ];
     maintainers = with maintainers; [ mdaiter samuela ];

@@ -5,7 +5,11 @@ final: prev: let
 
   ### CuDNN
 
-  buildCuDnnPackage = args: callPackage ./generic.nix {} args;
+  buildCuDnnPackage = args:
+    let
+      useCudatoolkitRunfile = lib.versionOlder args.fullVersion "11.4.0";
+    in
+    callPackage ./generic.nix { inherit useCudatoolkitRunfile; } args;
 
   toUnderscore = str: lib.replaceStrings ["."] ["_"] str;
 
