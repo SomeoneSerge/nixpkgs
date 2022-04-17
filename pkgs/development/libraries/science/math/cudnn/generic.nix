@@ -35,6 +35,11 @@ let
 
   majorMinorPatch = version: lib.concatStringsSep "." (lib.take 3 (lib.splitVersion version));
   version = majorMinorPatch fullVersion;
+
+  cudatoolkit_root =
+    if useCudatoolkitRunfile
+    then lib.warn "Building cudnn against run-file based cudatoolkit instead of redist packages" cudatoolkit
+    else libcublas;
 in
 stdenv.mkDerivation {
   pname = "cudatoolkit-${cudaMajorVersion}-cudnn";
@@ -52,12 +57,10 @@ stdenv.mkDerivation {
   ];
 
   # Used by autoPatchelfHook
-  buildInputs = builtins.map lib.getLib [
-    cc.cc # libstdc++
+  buildInputs = [
+    cc.cc.lib # libstdc++
     zlib
-    libcublas # may be null
-  ] ++ lib.optionals useCudatoolkitRunfile [
-    cudatoolkit
+    cudatoolkit_root
   ];
 
   # We used to patch Runpath here, but now we use autoPatchelfHook
@@ -84,6 +87,8 @@ stdenv.mkDerivation {
   '';
 
   passthru = {
+    inherit useCudatoolkitRunfile;
+
     cudatoolkit = lib.warn ''
       cudnn.cudatoolkit passthru attribute is deprecated;
       if your derivation uses cudnn directly, it should probably consume cudaPackages instead
