@@ -7,7 +7,7 @@ final: prev: let
 
   buildCuDnnPackage = args:
     let
-      useCudatoolkitRunfile = lib.versionOlder args.fullVersion "11.4.0";
+      useCudatoolkitRunfile = lib.versionOlder cudaVersion "11.3.999";
     in
     callPackage ./generic.nix { inherit useCudatoolkitRunfile; } args;
 
