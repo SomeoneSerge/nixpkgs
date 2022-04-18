@@ -83,7 +83,7 @@ stdenv.mkDerivation {
 
   # Otherwise autoPatchelf forgets $ORIGIN
   postFixup = ''
-    patchelf $out/lib/libcudnn.so --add-needed libcudnn_cnn_infer.so
+    patchelf $out/lib/libcudnn.so* --add-needed libcudnn_cnn_infer.so
   '';
 
   passthru = {
