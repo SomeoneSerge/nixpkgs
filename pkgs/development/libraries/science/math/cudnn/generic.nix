@@ -38,7 +38,7 @@ let
 
   cudatoolkit_root =
     if useCudatoolkitRunfile
-    then lib.warn "Building cudnn against run-file based cudatoolkit instead of redist packages" cudatoolkit
+    then cudatoolkit
     else libcublas;
 in
 stdenv.mkDerivation {
