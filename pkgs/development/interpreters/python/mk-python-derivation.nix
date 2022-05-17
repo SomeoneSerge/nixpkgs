@@ -59,7 +59,7 @@
 # Raise an error if two packages are installed with the same name
 # TODO: For cross we probably need a different PYTHONPATH, or not
 # add the runtime deps until after buildPhase.
-, catchConflicts ? (python.stdenv.hostPlatform == python.stdenv.buildPlatform)
+, catchConflicts ? (stdenv.hostPlatform == stdenv.buildPlatform)
 
 # Additional arguments to pass to the makeWrapper function, which wraps
 # generated binaries.
@@ -99,10 +99,12 @@
 
 , disabledTestPaths ? []
 
+# Allow passing in a custom stdenv to buildPython*
+, stdenv ? python.stdenv
+
 , ... } @ attrs:
 
 let
-  inherit (python) stdenv;
 
   withDistOutput = lib.elem format ["pyproject" "setuptools" "flit" "wheel"];
 
@@ -111,7 +113,7 @@ let
   # Keep extra attributes from `attrs`, e.g., `patchPhase', etc.
   self = toPythonModule (stdenv.mkDerivation ((builtins.removeAttrs attrs [
     "disabled" "checkPhase" "checkInputs" "nativeCheckInputs" "doCheck" "doInstallCheck" "dontWrapPythonPrograms" "catchConflicts" "format"
-    "disabledTestPaths" "outputs"
+    "disabledTestPaths" "outputs" "stdenv"
   ]) // {
 
     name = namePrefix + name_;
@@ -179,7 +181,7 @@ let
     '' + attrs.postFixup or "";
 
     # Python packages built through cross-compilation are always for the host platform.
-    disallowedReferences = lib.optionals (python.stdenv.hostPlatform != python.stdenv.buildPlatform) [ python.pythonForBuild ];
+    disallowedReferences = lib.optionals (stdenv.hostPlatform != stdenv.buildPlatform) [ python.pythonForBuild ];
 
     outputs = outputs ++ lib.optional withDistOutput "dist";
 
