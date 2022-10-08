@@ -35,8 +35,11 @@ let
       libcublas
       libcurand
       cuda_cccl
+    ] ++ (if cudaPackages ? cuda_profiler_api then [
+      cuda_profiler_api # cuda_profiler_api.h
+    ] else [
       cuda_nvprof # cuda_profiler_api.h
-    ];
+    ]);
   };
 in
 stdenv.mkDerivation {
