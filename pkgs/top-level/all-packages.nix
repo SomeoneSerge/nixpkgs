@@ -29387,6 +29387,26 @@ with pkgs;
     apptainer
     singularity;
 
+  _apptainer-nixos-overriden-default = (nixos {
+    programs.singularity = {
+      enable = true;
+      package = apptainer;
+    };
+  }).config.programs.singularity.packageOverriden
+  .overrideAttrs (oldAttrs: {
+    meta.description = "";
+  });
+
+  _singularity-nixos-overriden-default = (nixos {
+    programs.singularity = {
+      enable = true;
+      package = singularity;
+    };
+  }).config.programs.singularity.packageOverriden
+  .overrideAttrs (oldAttrs: {
+    meta.description = "";
+  });
+
   skate = callPackage ../applications/misc/skate { };
 
   slack = callPackage ../applications/networking/instant-messengers/slack { };
