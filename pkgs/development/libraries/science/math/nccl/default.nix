@@ -1,11 +1,9 @@
 { lib, stdenv, fetchFromGitHub, which, cudaPackages, addOpenGLRunpath }:
 
-let
-  inherit (cudaPackages) cudatoolkit;
-in
+with cudaPackages;
 
 stdenv.mkDerivation rec {
-  name = "nccl-${version}-cuda-${cudatoolkit.majorVersion}";
+  name = "nccl-${version}-cuda-${cudaPackages.cudaMajorVersion}";
   version = "2.16.5-1";
 
   src = fetchFromGitHub {
@@ -17,16 +15,25 @@ stdenv.mkDerivation rec {
 
   outputs = [ "out" "dev" ];
 
-  nativeBuildInputs = [ which addOpenGLRunpath ];
+  nativeBuildInputs = [
+    which
+    addOpenGLRunpath
+    cuda_nvcc
+  ];
 
-  buildInputs = [ cudatoolkit ];
+  buildInputs = [
+    cuda_cudart
+  ];
 
   preConfigure = ''
     patchShebangs src/collectives/device/gen_rules.sh
+    export NVCC_APPEND_FLAGS+=' --compiler-bindir=${cudatoolkit.cc}/bin'
   '';
 
   makeFlags = [
-    "CUDA_HOME=${cudatoolkit}"
+    "CUDA_HOME=${cuda_nvcc}"
+    "CUDA_LIB=${cuda_cudart}/lib64"
+    "CUDA_INC=${cuda_cudart}/include"
     "PREFIX=$(out)"
   ];
 

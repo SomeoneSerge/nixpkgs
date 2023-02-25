@@ -1,6 +1,7 @@
 { lib
 , stdenv
 , fetchurl
+, cudatoolkit
 , autoPatchelfHook
 , autoAddOpenGLRunpathHook
 }:
@@ -10,7 +11,8 @@ attrs:
 
 let
   arch = "linux-x86_64";
-in stdenv.mkDerivation {
+in
+stdenv.mkDerivation {
   inherit pname;
   inherit (attrs) version;
 
@@ -29,7 +31,7 @@ in stdenv.mkDerivation {
   ];
 
   buildInputs = [
-    stdenv.cc.cc.lib
+    cudatoolkit.cc.cc.lib
   ];
 
   dontBuild = true;
@@ -42,6 +44,8 @@ in stdenv.mkDerivation {
     mv * $out
     runHook postInstall
   '';
+
+  passthru.stdenv = stdenv;
 
   meta = {
     description = attrs.name;
