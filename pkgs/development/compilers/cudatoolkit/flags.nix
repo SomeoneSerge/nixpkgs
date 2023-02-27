@@ -1,6 +1,6 @@
 { config
 , lib
-, cudatoolkit
+, cudaMajorVersion
 }:
 let
 
@@ -51,28 +51,32 @@ let
     "9" = "Hopper";
   };
 
-  defaultCudaArchList = defaultCudaCapabilities."cuda${lib.versions.major cudatoolkit.version}";
+  defaultCudaArchList = defaultCudaCapabilities."cuda${cudaMajorVersion}";
   cudaRealCapabilities = config.cudaCapabilities or defaultCudaArchList;
   capabilitiesForward = "${lib.last cudaRealCapabilities}+PTX";
 
-  dropDot = ver: builtins.replaceStrings ["."] [""] ver;
+  dropDot = ver: builtins.replaceStrings [ "." ] [ "" ] ver;
 
   archMapper = feat: map (ver: "${feat}_${dropDot ver}");
   gencodeMapper = feat: map (ver: "-gencode=arch=compute_${dropDot ver},code=${feat}_${dropDot ver}");
-  cudaRealArchs = archMapper "sm" cudaRealCapabilities;
-  cudaPTXArchs = archMapper "compute" cudaRealCapabilities;
-  cudaArchs = cudaRealArchs ++ [ (lib.last cudaPTXArchs) ];
 
-  cudaArchNames = lib.unique (map (v: cudaMicroarchitectureNames.${lib.versions.major v}) cudaRealCapabilities);
-  cudaCapabilities = cudaRealCapabilities ++ lib.optional (config.cudaForwardCompat or true) capabilitiesForward;
-  cudaGencode = gencodeMapper "sm" cudaRealCapabilities ++ lib.optionals (config.cudaForwardCompat or true) (gencodeMapper "compute" [ (lib.last cudaPTXArchs) ]);
+  formatCapabilities = cudaRealCapabilities: rec {
+    inherit cudaRealCapabilities;
 
-  cudaCapabilitiesCommaString = lib.strings.concatStringsSep "," cudaCapabilities;
-  cudaCapabilitiesSemiColonString = lib.strings.concatStringsSep ";" cudaCapabilities;
-  cudaRealCapabilitiesCommaString = lib.strings.concatStringsSep "," cudaRealCapabilities;
+    cudaRealArchs = archMapper "sm" cudaRealCapabilities;
+    cudaPTXArchs = archMapper "compute" cudaRealCapabilities;
+    cudaArchs = cudaRealArchs ++ [ (lib.last cudaPTXArchs) ];
+
+    cudaArchNames = lib.unique (map (v: cudaMicroarchitectureNames.${lib.versions.major v}) cudaRealCapabilities);
+    cudaCapabilities = cudaRealCapabilities ++ lib.optional (config.cudaForwardCompat or true) capabilitiesForward;
+    cudaGencode = gencodeMapper "sm" cudaRealCapabilities ++ lib.optionals (config.cudaForwardCompat or true) (gencodeMapper "compute" [ (lib.last cudaPTXArchs) ]);
+
+    cudaCapabilitiesCommaString = lib.strings.concatStringsSep "," cudaCapabilities;
+    cudaCapabilitiesSemiColonString = lib.strings.concatStringsSep ";" cudaCapabilities;
+    cudaRealCapabilitiesCommaString = lib.strings.concatStringsSep "," cudaRealCapabilities;
+  };
 
 in
 {
-   inherit cudaArchs cudaArchNames cudaCapabilities cudaCapabilitiesCommaString cudaCapabilitiesSemiColonString
-     cudaRealCapabilities cudaRealCapabilitiesCommaString cudaGencode cudaRealArchs cudaPTXArchs;
-}
+  inherit formatCapabilities;
+} // formatCapabilities cudaRealCapabilities

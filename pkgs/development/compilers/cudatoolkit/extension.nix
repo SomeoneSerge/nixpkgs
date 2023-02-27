@@ -1,4 +1,5 @@
-final: prev: let
+final: prev:
+let
   ### Cuda Toolkit
 
   # Function to build the class cudatoolkit package
@@ -10,8 +11,9 @@ final: prev: let
   ### Add classic cudatoolkit package
   cudatoolkit = buildCudaToolkitPackage ((attrs: attrs // { gcc = prev.pkgs.${attrs.gcc}; }) cudatoolkitVersions.${final.cudaVersion});
 
-  cudaFlags = final.callPackage ./flags.nix {};
+  cudaFlags = final.callPackage ./flags.nix { };
 
-in {
+in
+{
   inherit cudatoolkit cudaFlags;
 }

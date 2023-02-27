@@ -17,7 +17,9 @@
 # that in nix as well. It would make some things easier and less confusing, but
 # it would also make the default tensorflow package unfree. See
 # https://groups.google.com/a/tensorflow.org/forum/#!topic/developers/iRCt5m4qUz0
-, cudaSupport ? false, cudaPackages ? {}
+, cudaSupport ? false
+, cudaPackages ? { }
+, cudaCapabilities ? cudaPackages.cudaFlags.cudaRealCapabilities
 , mklSupport ? false, mkl
 , tensorboardSupport ? true
 # XLA without CUDA is broken
@@ -30,7 +32,8 @@
 }:
 
 let
-  inherit (cudaPackages) cudatoolkit cudaFlags cudnn nccl;
+  inherit (cudaPackages) cudatoolkit cudnn nccl;
+  cudaFlags = cudaPackages.cudaFlags.formatCapabilities cudaCapabilities;
 in
 
 assert cudaSupport -> cudatoolkit != null
@@ -301,7 +304,7 @@ let
     TF_CUDA_PATHS = lib.optionalString cudaSupport "${cudatoolkit_joined},${cudnn},${nccl}";
     GCC_HOST_COMPILER_PREFIX = lib.optionalString cudaSupport "${cudatoolkit_cc_joined}/bin";
     GCC_HOST_COMPILER_PATH = lib.optionalString cudaSupport "${cudatoolkit_cc_joined}/bin/gcc";
-    TF_CUDA_COMPUTE_CAPABILITIES = builtins.concatStringsSep "," cudaFlags.cudaRealArchs;
+    TF_CUDA_COMPUTE_CAPABILITIES = cudaFlags.cudaRealCapabilitiesCommaString;
 
     postPatch = ''
       # bazel 3.3 should work just as well as bazel 3.1
