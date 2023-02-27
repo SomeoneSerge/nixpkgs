@@ -37,7 +37,7 @@
 , enableContrib ? true
 
 , enableCuda ? (config.cudaSupport or false) && stdenv.hostPlatform.isx86_64
-, cudatoolkit
+, cudaPackages ? { }
 , nvidia-optical-flow-sdk
 
 , enableUnfree ? false
@@ -79,6 +79,8 @@
 }:
 
 let
+  inherit (cudaPackages) cudatoolkit cudaFlags;
+
   version = "4.7.0";
 
   src = fetchFromGitHub {
@@ -342,6 +344,7 @@ stdenv.mkDerivation {
     "-DCUDA_FAST_MATH=ON"
     "-DCUDA_HOST_COMPILER=${cudatoolkit.cc}/bin/cc"
     "-DCUDA_NVCC_FLAGS=--expt-relaxed-constexpr"
+    "-DCUDA_GENERATION=${lib.concatStringsSep ";" cudaFlags.cudaArchNames}"
     "-DNVIDIA_OPTICAL_FLOW_2_0_HEADERS_PATH=${nvidia-optical-flow-sdk}"
   ] ++ lib.optionals stdenv.isDarwin [
     "-DWITH_OPENCL=OFF"
