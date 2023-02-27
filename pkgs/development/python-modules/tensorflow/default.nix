@@ -32,6 +32,10 @@
 }:
 
 let
+  originalStdenv = stdenv;
+in
+let
+  stdenv = if cudaSupport then cudaPackages.stdenv else originalStdenv;
   inherit (cudaPackages) cudatoolkit cudnn nccl;
   cudaFlags = cudaPackages.cudaFlags.formatCapabilities cudaCapabilities;
 in
@@ -176,7 +180,12 @@ let
     '';
   }) else _bazel-build;
 
-  _bazel-build = (buildBazelPackage.override (lib.optionalAttrs stdenv.isDarwin {
+  _bazel-build = (buildBazelPackage.override (
+    lib.optionalAttrs cudaSupport
+      {
+        stdenv = cudaPackages.stdenv;
+      } //
+    lib.optionalAttrs stdenv.isDarwin {
     # clang 7 fails to emit a symbol for
     # __ZN4llvm11SmallPtrSetIPKNS_10AllocaInstELj8EED1Ev in any of the
     # translation units, so the build fails at link time
@@ -434,7 +443,7 @@ let
   };
 
 in buildPythonPackage {
-  inherit version pname;
+  inherit version pname stdenv;
   disabled = !isPy3k;
 
   src = bazel-build.python;
@@ -533,6 +542,7 @@ in buildPythonPackage {
   # Regression test for #77626 removed because not more `tensorflow.contrib`.
 
   passthru = {
+    inherit stdenv;
     inherit cudaPackages;
     deps = bazel-build.deps;
     libtensorflow = bazel-build.out;

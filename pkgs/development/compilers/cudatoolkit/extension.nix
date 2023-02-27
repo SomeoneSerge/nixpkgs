@@ -9,11 +9,15 @@ let
   cudatoolkitVersions = final.lib.importTOML ./versions.toml;
 
   ### Add classic cudatoolkit package
-  cudatoolkit = buildCudaToolkitPackage ((attrs: attrs // { gcc = prev.pkgs.${attrs.gcc}; }) cudatoolkitVersions.${final.cudaVersion});
+  cudatoolkit = buildCudaToolkitPackage ((attrs: attrs // {
+    gcc = prev.pkgs.${attrs.gcc}; # Left for compatibility
+    stdenv = prev.pkgs."${attrs.gcc}Stdenv";
+  }) cudatoolkitVersions.${final.cudaVersion});
 
   cudaFlags = final.callPackage ./flags.nix { };
 
 in
 {
   inherit cudatoolkit cudaFlags;
+  inherit (cudatoolkit) stdenv;
 }

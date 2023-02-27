@@ -26,6 +26,7 @@
 , eggUnpackHook
 , eggBuildHook
 , eggInstallHook
+, stdenv ? python.stdenv
 }:
 
 { name ? "${attrs.pname}-${attrs.version}"
