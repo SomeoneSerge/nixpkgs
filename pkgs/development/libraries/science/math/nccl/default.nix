@@ -1,7 +1,17 @@
-{ lib, stdenv, fetchFromGitHub, which, cudaPackages, addOpenGLRunpath }:
+{ lib
+, stdenv
+, fetchFromGitHub
+, which
+, cudaPackages ? { }
+, addOpenGLRunpath
+}:
 
 with cudaPackages;
 
+let
+  # Output looks like "-gencode=arch=compute_86,code=sm_86 -gencode=arch=compute_86,code=compute_86"
+  gencode = lib.concatStringsSep " " cudaFlags.cudaGencode;
+in
 stdenv.mkDerivation rec {
   name = "nccl-${version}-cuda-${cudaPackages.cudaMajorVersion}";
   version = "2.16.5-1";
@@ -38,6 +48,9 @@ stdenv.mkDerivation rec {
   # We hope it's a temporary solution
   + ''
     export NVCC_APPEND_FLAGS+=' --compiler-bindir=${cudatoolkit.cc}/bin'
+    makeFlagsArray+=(
+      "NVCC_GENCODE=${gencode}"
+    )
   '';
 
   makeFlags = [
