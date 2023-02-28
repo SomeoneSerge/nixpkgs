@@ -36,7 +36,7 @@ in (lib.filterAttrs (attr: _: (prev ? "${attr}")) {
         if [ -z "\''${CUDAHOSTCXX-}" ]; then
           export CUDAHOSTCXX=${cc}/bin;
         fi
-        export NVCC_PREEND_FLAGS+=' --compiler-bindir=${cc}/bin'
+        export NVCC_PREPEND_FLAGS+=' --compiler-bindir=${cc}/bin'
         EOF
       '';
     });
