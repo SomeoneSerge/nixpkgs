@@ -41,8 +41,8 @@ let
   # We want to achieve two things:
   # 1. NVCC should use a compatible back-end (e.g. gcc11 for cuda11)
   # 2. Normal C++ files should be compiled with the same toolchain,
-  #    since otherwise we sometimes get "`GLIBCXX_3.4.30' not found"
-  #    at runtime.
+  #    to avoid potential weird dynamic linkage errors at runtime.
+  #    This may not be necessary though
   #
   # Toolchain for Darwin:
   # clang 7 fails to emit a symbol for
@@ -230,6 +230,7 @@ let
       flatbuffers-core
       giflib
       grpc
+      # Necessary to fix the "`GLIBCXX_3.4.30' not found" error
       (icu.override { inherit stdenv; })
       jsoncpp
       libjpeg_turbo
