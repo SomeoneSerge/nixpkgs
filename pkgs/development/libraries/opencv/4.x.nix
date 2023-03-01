@@ -345,8 +345,14 @@ stdenv.mkDerivation {
     "-DCUDA_FAST_MATH=ON"
     "-DCUDA_HOST_COMPILER=${cudatoolkit.cc}/bin/cc"
     "-DCUDA_NVCC_FLAGS=--expt-relaxed-constexpr"
+
+    # OpenCV respects at least three variables:
+    # -DCUDA_GENERATION takes a single arch name, e.g. Volta
+    # -DCUDA_ARCH_BIN takes a semi-colon separated list of real arches, e.g. "8.0;8.6"
+    # -DCUDA_ARCH_PTX takes the virtual arch, e.g. "8.6"
     "-DCUDA_ARCH_BIN=${lib.concatStringsSep ";" cudaCapabilities}"
     "-DCUDA_ARCH_PTX=${lib.last cudaCapabilities}"
+
     "-DNVIDIA_OPTICAL_FLOW_2_0_HEADERS_PATH=${nvidia-optical-flow-sdk}"
   ] ++ lib.optionals stdenv.isDarwin [
     "-DWITH_OPENCL=OFF"
