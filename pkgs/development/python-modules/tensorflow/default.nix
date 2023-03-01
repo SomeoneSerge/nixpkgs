@@ -230,12 +230,12 @@ let
       flatbuffers-core
       giflib
       grpc
-      icu
+      (icu.override { inherit stdenv; })
       jsoncpp
       libjpeg_turbo
       libpng
       lmdb-core
-      pybind11
+      (pybind11.overridePythonAttrs (_: { inherit stdenv; }))
       snappy
       sqlite
     ] ++ lib.optionals cudaSupport [
