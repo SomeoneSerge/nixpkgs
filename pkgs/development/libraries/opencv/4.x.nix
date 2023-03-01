@@ -79,7 +79,8 @@
 }:
 
 let
-  inherit (cudaPackages) cudatoolkit cudaFlags;
+  inherit (cudaPackages) cudatoolkit;
+  inherit (cudaPackages.cudaFlags) cudaCapabilities;
 
   version = "4.7.0";
 
@@ -344,7 +345,8 @@ stdenv.mkDerivation {
     "-DCUDA_FAST_MATH=ON"
     "-DCUDA_HOST_COMPILER=${cudatoolkit.cc}/bin/cc"
     "-DCUDA_NVCC_FLAGS=--expt-relaxed-constexpr"
-    "-DCUDA_GENERATION=${lib.concatStringsSep ";" cudaFlags.archNames}"
+    "-DCUDA_ARCH_BIN=${lib.concatStringsSep ";" cudaCapabilities}"
+    "-DCUDA_ARCH_PTX=${lib.last cudaCapabilities}"
     "-DNVIDIA_OPTICAL_FLOW_2_0_HEADERS_PATH=${nvidia-optical-flow-sdk}"
   ] ++ lib.optionals stdenv.isDarwin [
     "-DWITH_OPENCL=OFF"
