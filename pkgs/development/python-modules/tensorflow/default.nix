@@ -455,7 +455,12 @@ let
   };
 
 in buildPythonPackage {
-  inherit version pname stdenv;
+  inherit version pname;
+
+  # By default we expect this to be a no-op.
+  # For CUDA and Darwin builds this enforces a compatible toolchain.
+  inherit stdenv;
+
   disabled = !isPy3k;
 
   src = bazel-build.python;
