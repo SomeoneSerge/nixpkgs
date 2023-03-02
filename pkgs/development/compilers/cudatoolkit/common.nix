@@ -285,7 +285,7 @@ backendStdenv.mkDerivation rec {
     popd
   '';
   passthru = {
-    cc = backendStdenv.cc;
+    inherit (backendStdenv) cc;
     majorMinorVersion = lib.versions.majorMinor version;
     majorVersion = lib.versions.majorMinor version;
   };
