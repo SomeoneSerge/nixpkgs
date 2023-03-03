@@ -24,7 +24,7 @@ in
 
   cuda_nvcc = prev.cuda_nvcc.overrideAttrs (oldAttrs:
     let
-      inherit (prev.cudatoolkit) cc;
+      inherit (prev.backendStdenv) cc;
     in
     {
       postInstall = (oldAttrs.postInstall or "") + ''
