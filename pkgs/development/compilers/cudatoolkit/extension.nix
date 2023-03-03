@@ -13,6 +13,7 @@ final: prev: let
   # We don't call it just "stdenv" to avoid confusion: e.g. this toolchain doesn't contain nvcc.
   # Instead, it's the back-end toolchain for nvcc to use.
   # We also use this to link a compatible libstdc++ (backendStdenv.cc.cc.lib)
+  # Cf. https://github.com/NixOS/nixpkgs/pull/218265 for context
   backendStdenv = prev.pkgs."${finalVersion.gcc}Stdenv";
 
   ### Add classic cudatoolkit package
@@ -23,7 +24,7 @@ final: prev: let
     in
     buildCudaToolkitPackage attrs';
 
-  cudaFlags = final.callPackage ./flags.nix { };
+  cudaFlags = final.callPackage ./flags.nix {};
 
 in
 {
