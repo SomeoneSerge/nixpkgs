@@ -27,12 +27,24 @@ in
       inherit (prev.backendStdenv) cc;
     in
     {
-      postInstall = (oldAttrs.postInstall or "") + ''
-        # Point NVCC at a compatible compiler
-        # FIXME: non-redist cudatoolkit copy-pastes this code
+      # Point NVCC at a compatible compiler
+      # FIXME: non-redist cudatoolkit copy-pastes this code
 
+      # For CMake-based projects:
+      # https://cmake.org/cmake/help/latest/module/FindCUDA.html#input-variables
+      # https://cmake.org/cmake/help/latest/envvar/CUDAHOSTCXX.html
+      # https://cmake.org/cmake/help/latest/variable/CMAKE_CUDA_HOST_COMPILER.html
+
+      # For non-CMake projects:
+      # We prepend --compiler-bindir to nvcc flags.
+      # Downstream packages can override these, because NVCC
+      # uses the last --compiler-bindir it gets on the command line.
+      # FIXME: this results in "incompatible redefinition" warnings.
+      # https://docs.nvidia.com/cuda/cuda-compiler-driver-nvcc/index.html#compiler-bindir-directory-ccbin
+      postInstall = (oldAttrs.postInstall or "") + ''
         mkdir -p $out/nix-support
         cat <<EOF >> $out/nix-support/setup-hook
+        cmakeFlags+=' -DCUDA_TOOLKIT_ROOT_DIR=$out'
         cmakeFlags+=' -DCUDA_HOST_COMPILER=${cc}/bin'
         cmakeFlags+=' -DCMAKE_CUDA_HOST_COMPILER=${cc}/bin'
         if [ -z "\''${CUDAHOSTCXX-}" ]; then
