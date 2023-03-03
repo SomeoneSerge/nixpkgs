@@ -8,7 +8,7 @@
 { blas
 , cmake
 , cudaPackages
-, cudaSupport ? true
+, cudaSupport ? true # Note: this way ofborg won't evaluate magma -> won't fail
 , fetchurl
 , gfortran
 , cudaCapabilities ? cudaPackages.cudaFlags.cudaCapabilities
