@@ -1,7 +1,6 @@
 { lib
 , backendStdenv
 , fetchurl
-, cudatoolkit
 , autoPatchelfHook
 , autoAddOpenGLRunpathHook
 }:
