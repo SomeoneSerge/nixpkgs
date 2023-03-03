@@ -1,6 +1,8 @@
-final: prev: let
+final: prev:
+let
   inherit (prev) lib pkgs;
-in (lib.filterAttrs (attr: _: (prev ? "${attr}")) {
+in
+(lib.filterAttrs (attr: _: (prev ? "${attr}")) {
   ### Overrides to fix the components of cudatoolkit-redist
 
   # Attributes that don't exist in the previous set are removed.
