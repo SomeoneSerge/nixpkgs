@@ -32,9 +32,9 @@
 }:
 
 let
+  # No, this doesn't lead to infinite recursion
   originalStdenv = stdenv;
-in
-let
+
   # Tensorflow looks at many toolchain-related variables which may diverge.
   #
   # Toolchain for cuda-enabled builds.
