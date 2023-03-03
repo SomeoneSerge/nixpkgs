@@ -145,36 +145,21 @@ backendStdenv.mkDerivation rec {
 
     # Fix builds with newer glibc version
     sed -i "1 i#define _BITS_FLOATN_H" "$out/include/host_defines.h"
-
-    # Ensure that cmake can find CUDA.
+  '' +
+  # Point NVCC at a compatible compiler
+  # FIXME: redist cuda_nvcc copy-pastes this code
+  # Refer to comments in the overrides for cuda_nvcc for explanation
+  ''
     mkdir -p $out/nix-support
-    echo "cmakeFlags+=' -DCUDA_TOOLKIT_ROOT_DIR=$out'" >> $out/nix-support/setup-hook
-
-    # Set the host compiler to be used by nvcc.
-    # FIXME: redist cuda_nvcc copy-pastes this code
-
-    # For CMake-based projects:
-    # https://cmake.org/cmake/help/latest/module/FindCUDA.html#input-variables
-    # https://cmake.org/cmake/help/latest/envvar/CUDAHOSTCXX.html
-    # https://cmake.org/cmake/help/latest/variable/CMAKE_CUDA_HOST_COMPILER.html
-
-    # For non-CMake projects:
-    # FIXME: results in "incompatible redefinition" warnings ...but we keep
-    # both this and cmake variables until we come up with a more general
-    # solution
-    # https://docs.nvidia.com/cuda/cuda-compiler-driver-nvcc/index.html#compiler-bindir-directory-ccbin
-
     cat <<EOF >> $out/nix-support/setup-hook
-
+    cmakeFlags+=' -DCUDA_TOOLKIT_ROOT_DIR=$out'
     cmakeFlags+=' -DCUDA_HOST_COMPILER=${backendStdenv.cc}/bin'
     cmakeFlags+=' -DCMAKE_CUDA_HOST_COMPILER=${backendStdenv.cc}/bin'
     if [ -z "\''${CUDAHOSTCXX-}" ]; then
       export CUDAHOSTCXX=${backendStdenv.cc}/bin;
     fi
-
     export NVCC_PREPEND_FLAGS+=' --compiler-bindir=${backendStdenv.cc}/bin'
     EOF
-
 
     # Move some libraries to the lib output so that programs that
     # depend on them don't pull in this entire monstrosity.
