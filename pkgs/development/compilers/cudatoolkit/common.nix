@@ -21,6 +21,7 @@ args@
 , perl
 , python3
 , requireFile
+, stdenv
 , backendStdenv # E.g. gcc11Stdenv, set in extension.nix
 , unixODBC
 , xorg
@@ -200,12 +201,9 @@ backendStdenv.mkDerivation rec {
     let rpath = lib.concatStringsSep ":" [
       (lib.makeLibraryPath (runtimeDependencies ++ [ "$lib" "$out" "$out/nvvm" ]))
 
-      # The path to libstdc++ and such
-      #
-      # `backendStdenv` is the cuda-compatible toolchain that we pick in
-      # extension.nix; we hand it to NVCC to use as a back-end, and we link
-      # cudatoolkit's binaries against its libstdc++
-      "${backendStdenv.cc.cc.lib}/lib64"
+      # The same libstdc++ as the rest of nixpkgs is using,
+      # even though we might be building with an older compiler
+      "${stdenv.cc.cc.lib}/lib64"
 
       "$out/jre/lib/amd64/jli"
       "$out/lib64"
