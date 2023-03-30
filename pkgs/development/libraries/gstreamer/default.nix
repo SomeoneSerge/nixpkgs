@@ -1,4 +1,9 @@
-{ callPackage, AudioToolbox, AVFoundation, Cocoa, CoreFoundation, CoreMedia, CoreServices, CoreVideo, DiskArbitration, Foundation, IOKit, MediaToolbox, OpenGL, VideoToolbox }:
+{ callPackage, AudioToolbox, AVFoundation, Cocoa, CoreFoundation, CoreMedia, CoreServices, CoreVideo, DiskArbitration, Foundation, IOKit, MediaToolbox, OpenGL, VideoToolbox,
+replaceDependency,
+opencv4WithoutOverrides,
+opencv4,
+graftOpenCV ? true
+}:
 
 {
   gstreamer = callPackage ./core { inherit CoreServices; };
@@ -9,7 +14,19 @@
 
   gst-plugins-good = callPackage ./good { inherit Cocoa; };
 
-  gst-plugins-bad = callPackage ./bad { inherit AudioToolbox AVFoundation CoreMedia CoreVideo Foundation MediaToolbox VideoToolbox; };
+  gst-plugins-bad =
+    let
+      original = callPackage ./bad {
+        inherit AudioToolbox AVFoundation CoreMedia CoreVideo Foundation MediaToolbox VideoToolbox;
+        opencv4 = opencv4WithoutOverrides;
+      };
+      grafted = replaceDependency {
+        drv = original;
+        oldDependency = opencv4WithoutOverrides;
+        newDependency = opencv4;
+      };
+    in
+    grafted;
 
   gst-plugins-ugly = callPackage ./ugly { inherit CoreFoundation DiskArbitration IOKit; };
 

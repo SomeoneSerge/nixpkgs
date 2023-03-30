@@ -22879,6 +22879,10 @@ with pkgs;
     ffmpeg = ffmpeg_4;
   };
 
+  opencv4WithoutOverrides = opencv4.override {
+    config = { };
+  };
+
   opencv = opencv4;
 
   imath = callPackage ../development/libraries/imath { };
