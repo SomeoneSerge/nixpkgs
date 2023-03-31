@@ -1815,9 +1815,7 @@ self: super: with self; {
 
   chai = callPackage ../development/python-modules/chai { };
 
-  chainer = callPackage ../development/python-modules/chainer {
-    cudaSupport = pkgs.config.cudaSupport or false;
-  };
+  chainer = callPackage ../development/python-modules/chainer { };
 
   chainmap = callPackage ../development/python-modules/chainmap { };
 
@@ -5255,14 +5253,10 @@ self: super: with self; {
 
   jax-jumpy = callPackage ../development/python-modules/jax-jumpy { };
 
-  jaxlib-bin = callPackage ../development/python-modules/jaxlib/bin.nix {
-    cudaSupport = pkgs.config.cudaSupport or false;
-  };
+  jaxlib-bin = callPackage ../development/python-modules/jaxlib/bin.nix { };
 
   jaxlib-build = callPackage ../development/python-modules/jaxlib rec {
     inherit (pkgs.darwin) cctools;
-    # Some platforms don't have `cudaSupport` defined, hence the need for 'or false'.
-    cudaSupport = pkgs.config.cudaSupport or false;
     IOKit = pkgs.darwin.apple_sdk_11_0.IOKit;
     protobuf = pkgs.protobuf3_20; # jaxlib-build 0.3.15 won't build with protobuf 3.21
   };
@@ -5803,7 +5797,6 @@ self: super: with self; {
 
   libgpuarray = callPackage ../development/python-modules/libgpuarray {
     clblas = pkgs.clblas.override { inherit (self) boost; };
-    cudaSupport = pkgs.config.cudaSupport or false;
   };
 
   libiio = (toPythonModule (pkgs.libiio.override { inherit python; })).python;
@@ -7104,9 +7097,7 @@ self: super: with self; {
 
   num2words = callPackage ../development/python-modules/num2words { };
 
-  numba = callPackage ../development/python-modules/numba {
-    cudaSupport = pkgs.config.cudaSupport or false;
-  };
+  numba = callPackage ../development/python-modules/numba { };
 
   numbaWithCuda = self.numba.override {
     cudaSupport = true;
@@ -12303,13 +12294,10 @@ self: super: with self; {
 
   tensorboardx = callPackage ../development/python-modules/tensorboardx { };
 
-  tensorflow-bin = callPackage ../development/python-modules/tensorflow/bin.nix {
-    cudaSupport = pkgs.config.cudaSupport or false;
-  };
+  tensorflow-bin = callPackage ../development/python-modules/tensorflow/bin.nix { };
 
   tensorflow-build = callPackage ../development/python-modules/tensorflow {
     inherit (pkgs.darwin) cctools;
-    cudaSupport = pkgs.config.cudaSupport or false;
     inherit (self.tensorflow-bin) cudaPackages;
     inherit (pkgs.darwin.apple_sdk.frameworks) Foundation Security;
     flatbuffers-core = pkgs.flatbuffers;
@@ -12427,10 +12415,7 @@ self: super: with self; {
 
   theano-pymc = callPackage ../development/python-modules/theano-pymc { };
 
-  theano = callPackage ../development/python-modules/theano rec {
-    cudaSupport = pkgs.config.cudaSupport or false;
-    cudnnSupport = cudaSupport;
-  };
+  theano = callPackage ../development/python-modules/theano rec { };
 
   theanoWithCuda = self.theano.override {
     cudaSupport = true;

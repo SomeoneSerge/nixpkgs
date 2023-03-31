@@ -8,7 +8,8 @@
 , patchelf
 , fixDarwinDylibNames
 
-, cudaSupport
+, config
+, cudaSupport ? config.cudaSupport or false
 }:
 
 let
