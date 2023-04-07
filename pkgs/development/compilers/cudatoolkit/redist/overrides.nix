@@ -74,6 +74,12 @@ in
     prev.libcurand
   ];
 
+  cuda_nvrtc = prev.cuda_nvrtc.overrideAttrs (oldAttrs: {
+    preFixup = (oldAttrs.preFixup or "") + ''
+      patchelf $out/lib/libnvrtc.so --add-needed libnvrtc-builtins.so.${oldAttrs.version}
+    '';
+  });
+
   nsight_compute = prev.nsight_compute.overrideAttrs (oldAttrs: {
     nativeBuildInputs = oldAttrs.nativeBuildInputs
     ++ (if (lib.versionOlder prev.nsight_compute.version "2022.2.0")
