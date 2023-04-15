@@ -12,7 +12,7 @@
 , llvmPackages
 , R
 , rPackages
-}:
+}@inputs:
 
 assert ncclSupport -> cudaSupport;
 # Disable regular tests when building the R package
@@ -21,6 +21,11 @@ assert ncclSupport -> cudaSupport;
 # object that isn't compatible with the regular CLI
 # tests.
 assert rLibrary -> doCheck != true;
+
+let
+  inherit (cudaPackages) backendStdenv;
+  stdenv = if cudaSupport then backendStdenv else inputs.stdenv;
+in
 
 stdenv.mkDerivation rec {
   pnameBase = "xgboost";
