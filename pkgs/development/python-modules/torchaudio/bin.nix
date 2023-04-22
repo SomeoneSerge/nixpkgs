@@ -1,7 +1,10 @@
 { lib
 , stdenv
+, autoPatchelfHook
 , buildPythonPackage
+, cudaPackages
 , fetchurl
+, ffmpeg_4
 , isPy37
 , isPy38
 , isPy39
@@ -11,7 +14,6 @@
 , torch-bin
 , pythonOlder
 , pythonAtLeast
-, patchelf
 , addOpenGLRunpath
 }:
 
@@ -21,15 +23,23 @@ buildPythonPackage rec {
   format = "wheel";
 
   src =
-    let pyVerNoDot = lib.replaceStrings [ "." ] [ "" ] python.pythonVersion;
-        unsupported = throw "Unsupported system";
-        srcs = (import ./binary-hashes.nix version)."${stdenv.system}-${pyVerNoDot}" or unsupported;
-    in fetchurl srcs;
+    let
+      pyVerNoDot = lib.replaceStrings [ "." ] [ "" ] python.pythonVersion;
+      unsupported = throw "Unsupported system";
+      srcs = (import ./binary-hashes.nix version)."${stdenv.system}-${pyVerNoDot}" or unsupported;
+    in
+    fetchurl srcs;
 
   disabled = !(isPy38 || isPy39 || isPy310 || isPy311);
 
+  buildInputs = with cudaPackages; [
+    cuda_cudart
+    cuda_nvtx
+    ffmpeg_4.lib
+  ];
+
   nativeBuildInputs = [
-    patchelf
+    autoPatchelfHook
     addOpenGLRunpath
   ];
 
@@ -37,20 +47,14 @@ buildPythonPackage rec {
     torch-bin
   ];
 
+  preInstall = ''
+    addAutoPatchelfSearchPath "${torch-bin}/${python.sitePackages}/torch"
+  '';
+
   # The wheel-binary is not stripped to avoid the error of `ImportError: libtorch_cuda_cpp.so: ELF load command address/offset not properly aligned.`.
   dontStrip = true;
 
   pythonImportsCheck = [ "torchaudio" ];
-
-  postFixup = let
-    rpath = lib.makeLibraryPath [ stdenv.cc.cc.lib ];
-  in ''
-    find $out/${python.sitePackages}/torchaudio/lib -type f \( -name '*.so' -or -name '*.so.*' \) | while read lib; do
-      echo "setting rpath for $lib..."
-      patchelf --set-rpath "${rpath}:$out/${python.sitePackages}/torchaudio/lib" "$lib"
-      addOpenGLRunpath "$lib"
-    done
-  '';
 
   meta = with lib; {
     description = "PyTorch audio library";
