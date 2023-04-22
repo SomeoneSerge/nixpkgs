@@ -2,10 +2,10 @@
 , stdenv
 , buildPythonPackage
 , fetchurl
-, isPy37
 , isPy38
 , isPy39
 , isPy310
+, isPy311
 , patchelf
 , pillow
 , python
@@ -16,7 +16,7 @@ let
   pyVerNoDot = builtins.replaceStrings [ "." ] [ "" ] python.pythonVersion;
   srcs = import ./binary-hashes.nix version;
   unsupported = throw "Unsupported system";
-  version = "0.14.1";
+  version = "0.15.1";
 in buildPythonPackage {
   inherit version;
 
@@ -26,7 +26,7 @@ in buildPythonPackage {
 
   src = fetchurl srcs."${stdenv.system}-${pyVerNoDot}" or unsupported;
 
-  disabled = !(isPy37 || isPy38 || isPy39 || isPy310);
+  disabled = !(isPy38 || isPy39 || isPy310 || isPy311);
 
   nativeBuildInputs = [
     patchelf
