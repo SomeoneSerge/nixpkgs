@@ -27,35 +27,16 @@ in
       inherit (prev.backendStdenv) cc;
     in
     {
-      # Point NVCC at a compatible compiler
-      # FIXME: non-redist cudatoolkit copy-pastes this code
+      env.cudartRoot = "${prev.lib.getDev final.cuda_cudart}";
+      setupHook = ../hooks/nvcc-setup-hook.sh;
 
-      # For CMake-based projects:
-      # https://cmake.org/cmake/help/latest/module/FindCUDA.html#input-variables
-      # https://cmake.org/cmake/help/latest/envvar/CUDAHOSTCXX.html
-      # https://cmake.org/cmake/help/latest/variable/CMAKE_CUDA_HOST_COMPILER.html
-
-      # For non-CMake projects:
-      # We prepend --compiler-bindir to nvcc flags.
-      # Downstream packages can override these, because NVCC
-      # uses the last --compiler-bindir it gets on the command line.
-      # FIXME: this results in "incompatible redefinition" warnings.
-      # https://docs.nvidia.com/cuda/cuda-compiler-driver-nvcc/index.html#compiler-bindir-directory-ccbin
-      # NOTE: We unconditionally set -Xfatbin=-compress-all, which reduces the size of the
-      #   compiled binaries. If binaries grow over 2GB, they will fail to link. This is a problem
-      #   for us, as the default set of CUDA capabilities we build can regularly cause this to
-      #   occur (for example, with Magma).
-      postInstall = (oldAttrs.postInstall or "") + ''
-        mkdir -p $out/nix-support
-        cat <<EOF >> $out/nix-support/setup-hook
-        cmakeFlags+=' -DCUDA_HOST_COMPILER=${cc}/bin'
-        cmakeFlags+=' -DCMAKE_CUDA_HOST_COMPILER=${cc}/bin'
-        if [ -z "\''${CUDAHOSTCXX-}" ]; then
-          export CUDAHOSTCXX=${cc}/bin;
-        fi
-        export NVCC_PREPEND_FLAGS+=' --compiler-bindir=${cc}/bin -Xfatbin=-compress-all'
-        EOF
-      '';
+      # Example: magma puts cuda_nvcc in its nativeBuildInputs `(-1, 0)`, but
+      # cuda_nvcc's depsHostHostPropagated have the offset of `(0, 0)`, so
+      # they're equivalent to magma's `(-1, 0) + (0, 0) = (-1, 0)`
+      # nativeBuildInputs, so magma runs setupCudaPathsHook
+      depsHostHostPropagated = [
+        final.setupCudaPathsHook
+      ];
     });
 
   cuda_nvprof = prev.cuda_nvprof.overrideAttrs (oldAttrs: {
