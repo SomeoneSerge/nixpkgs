@@ -4,6 +4,7 @@
 , substituteAll
 , pythonOlder
 , addOpenGLRunpath
+, pynvml
 }:
 
 buildPythonPackage rec {
@@ -23,8 +24,27 @@ buildPythonPackage rec {
     })
   ];
 
+  doCheck = false;
+  passthru.tests.testNvmlInit = pynvml.overridePythonAttrs (_: {
+    checkPhase = ''
+      python3 << \EOF
+      import pynvml
+      from pynvml.smi import nvidia_smi
 
-  doCheck = false;  # no tests in PyPi dist
+      try:
+          print("enter: nvmlInit")
+          print(f"{pynvml.nvmlInit()=}")
+      except Exception as e:
+          print(e)
+          raise
+      finally:
+          print("exit: nvmlInit")
+      EOF
+    '';
+    doCheck = true;
+    requiredSystemFeatures = [ "expose-cuda" ];
+  });
+
   pythonImportsCheck = [ "pynvml" "pynvml.smi" ];
 
   meta = with lib; {
