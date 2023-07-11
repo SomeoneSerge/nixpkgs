@@ -1,13 +1,14 @@
 { lib
-, nixpkgsCompatibleLibstdcxx
+, nixpkgsCompatibleHostLibstdcxx
 , nvccCompatibleCC
 , overrideCC
+, buildPackages
 , stdenv
 , wrapCCWith
 }:
 
 let
-  cc = wrapCCWith
+  cc = buildPackages.wrapCCWith
     {
       cc = nvccCompatibleCC;
 
@@ -17,11 +18,11 @@ let
       # older libstdc++. This, in practice, means that we should use libstdc++ from
       # the same stdenv that the rest of nixpkgs uses.
       # We currently do not try to support anything other than gcc and linux.
-      libcxx = nixpkgsCompatibleLibstdcxx;
+      libcxx = nixpkgsCompatibleHostLibstdcxx;
     };
   cudaStdenv = overrideCC stdenv cc;
   passthruExtra = {
-    inherit nixpkgsCompatibleLibstdcxx;
+    inherit nixpkgsCompatibleHostLibstdcxx;
     # cc already exposed
   };
   assertCondition = true;

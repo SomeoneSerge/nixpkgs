@@ -9,24 +9,16 @@ final: prev: let
 
   finalVersion = cudatoolkitVersions.${final.cudaVersion};
 
-  # Exposed as cudaPackages.backendStdenv.
-  # This is what nvcc uses as a backend,
-  # and it has to be an officially supported one (e.g. gcc11 for cuda11).
+  # Exposed as cudaPackages.backendStdenv and has the same interface as any
+  # "stdenv", except accessing backendStdenv.cc.cc (the unwrapped compiler) is
+  # "undefined behaviour".
   #
-  # It, however, propagates current stdenv's libstdc++ to avoid "GLIBCXX_* not found errors"
-  # when linked with other C++ libraries.
-  # E.g. for cudaPackages_11_8 we use gcc11 with gcc12's libstdc++
+  # This controls what compiler nvcc uses as a backend,
+  # and it has to provide an officially supported one (e.g. gcc11 for cuda11).
+  # This also controls which standard c++ library is linked to the resulting applications.
+  #
   # Cf. https://github.com/NixOS/nixpkgs/pull/218265 for context
-  backendStdenv = final.callPackage ./stdenv.nix {
-    # We use buildPackages (= pkgsBuildHost) because we look for a gcc that
-    # runs on our build platform, and that produces executables for the host
-    # platform (= platform on which we deploy and run the downstream packages).
-    # The target platform of buildPackages.gcc is our host platform, so its
-    # .lib output should be the libstdc++ we want to be writing in the runpaths
-    # Cf. https://github.com/NixOS/nixpkgs/pull/225661#discussion_r1164564576
-    nixpkgsCompatibleLibstdcxx = final.pkgs.buildPackages.gcc.cc.lib;
-    nvccCompatibleCC = final.pkgs.buildPackages."${finalVersion.gcc}".cc;
-  };
+  backendStdenv = final.callPackage ./stdenv.nix { };
 
   ### Add classic cudatoolkit package
   cudatoolkit =
@@ -62,8 +54,23 @@ in
 {
   inherit
     backendStdenv
-    cudatoolkit
     cudaFlags
+    cudatoolkit
     markForCudatoolkitRootHook
     setupCudaPathsHook;
+
+    # Arguments to ./stdenv.nix, exposed as attributes so they can be
+    # overridden.
+    #
+    # Our goal is to link shared libraries to the host platform's most up-to-date libstdc++.
+    # One exception is nvcc, which we link to the build platform's libstdc++.
+    #
+    # Verify by building
+    # `.#pkgsCross.aarch64-multiplatform.cudaPackages.cuda_nvcc` and watching
+    # for autopatchelf errors concerning libstdc++ and libgcc_s
+    #
+    # Cf. https://github.com/NixOS/nixpkgs/pull/225661#discussion_r1164564576
+    nixpkgsCompatibleBuildLibstdcxx = final.pkgs.buildPackages.stdenv.cc.cc.lib;
+    nixpkgsCompatibleHostLibstdcxx = final.pkgs.pkgsHostTarget.stdenv.cc.cc.lib;
+    nvccCompatibleCC = final.pkgs.buildPackages."${finalVersion.gcc}".cc;
 }

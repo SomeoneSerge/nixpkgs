@@ -24,11 +24,17 @@ in
 
   cuda_nvcc = prev.cuda_nvcc.overrideAttrs (oldAttrs:
     let
-      inherit (prev.backendStdenv) cc;
+      cc = final.nvccCompatibleCC;
     in
     {
       env.cudartRoot = "${prev.lib.getDev final.cuda_cudart}";
       setupHook = ../hooks/nvcc-setup-hook.sh;
+      buildInputs = oldAttrs.buildInputs ++ [
+        final.nixpkgsCompatibleBuildLibstdcxx
+      ];
+
+      # Point NVCC at a compatible compiler
+      # FIXME: non-redist cudatoolkit copy-pastes this code
 
       # Example: magma puts cuda_nvcc in its nativeBuildInputs `(-1, 0)`, but
       # cuda_nvcc's depsHostHostPropagated have the offset of `(0, 0)`, so
