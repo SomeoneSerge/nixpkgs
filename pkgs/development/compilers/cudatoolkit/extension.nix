@@ -46,6 +46,7 @@ final: prev: let
         {
           name = "setup-cuda-paths-hook";
           substitutions.ccRoot = "${backendStdenv.cc}";
+          substitutions.ccFullPath = "${backendStdenv.cc}/bin/${backendStdenv.cc.targetPrefix}cc";
         }
         ./hooks/setup-cuda-paths-hook.sh)
     { });
