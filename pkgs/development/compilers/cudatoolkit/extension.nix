@@ -74,4 +74,5 @@ in
     nixpkgsCompatibleBuildLibstdcxx = final.pkgs.buildPackages.stdenv.cc.cc.lib;
     nixpkgsCompatibleHostLibstdcxx = final.pkgs.pkgsHostTarget.stdenv.cc.cc.lib;
     nvccCompatibleCC = final.pkgs."${finalVersion.gcc}Stdenv".cc.cc;
+    baseStdenv = final.pkgs."${finalVersion.gcc}Stdenv";
 }

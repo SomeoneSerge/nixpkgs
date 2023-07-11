@@ -1,10 +1,10 @@
 { lib
 , nixpkgsCompatibleHostLibstdcxx
 , nvccCompatibleCC
-, overrideCC
+, stdenvAdapters
 , buildPackages
-, stdenv
 , wrapCCWith
+, baseStdenv
 }:
 
 let
@@ -20,7 +20,7 @@ let
       # We currently do not try to support anything other than gcc and linux.
       libcxx = nixpkgsCompatibleHostLibstdcxx;
     };
-  cudaStdenv = overrideCC stdenv cc;
+  cudaStdenv = stdenvAdapters.overrideCC baseStdenv cc;
   passthruExtra = {
     inherit nixpkgsCompatibleHostLibstdcxx;
     # cc already exposed
