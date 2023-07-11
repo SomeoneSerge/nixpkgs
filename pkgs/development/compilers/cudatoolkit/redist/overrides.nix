@@ -24,9 +24,13 @@ in
 
   cuda_nvcc = prev.cuda_nvcc.overrideAttrs (oldAttrs:
     let
-      inherit (prev.backendStdenv) cc;
+      cc = final.nvccCompatibleCC;
     in
     {
+      buildInputs = oldAttrs.buildInputs ++ [
+        final.nixpkgsCompatibleBuildLibstdcxx
+      ];
+
       # Point NVCC at a compatible compiler
       # FIXME: non-redist cudatoolkit copy-pastes this code
 
