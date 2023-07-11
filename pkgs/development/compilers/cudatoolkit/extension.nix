@@ -68,4 +68,6 @@ in
     cudaFlags
     markForCudatoolkitRootHook
     setupCudaHook;
+
+    saxpy = final.callPackage ./saxpy { };
 }
