@@ -28,8 +28,8 @@ setupCUDAToolkitCompilers() {
     # https://cmake.org/cmake/help/latest/envvar/CUDAHOSTCXX.html
     # https://cmake.org/cmake/help/latest/variable/CMAKE_CUDA_HOST_COMPILER.html
 
-    export cmakeFlags+=" -DCUDA_HOST_COMPILER=@ccRoot@/bin"
-    export cmakeFlags+=" -DCMAKE_CUDA_HOST_COMPILER=@ccRoot@/bin"
+    export cmakeFlags+=" -DCUDA_HOST_COMPILER=@ccFullPath@"
+    export cmakeFlags+=" -DCMAKE_CUDA_HOST_COMPILER=@ccFullPath@"
 
     # For non-CMake projects:
     # We prepend --compiler-bindir to nvcc flags.
@@ -42,7 +42,7 @@ setupCUDAToolkitCompilers() {
     #   for us, as the default set of CUDA capabilities we build can regularly cause this to
     #   occur (for example, with Magma).
     if [ -z "${CUDAHOSTCXX-}" ]; then
-      export CUDAHOSTCXX=@ccRoot@/bin;
+      export CUDAHOSTCXX="@ccFullPath@";
     fi
 
     export NVCC_PREPEND_FLAGS+=" --compiler-bindir=@ccRoot@/bin"
