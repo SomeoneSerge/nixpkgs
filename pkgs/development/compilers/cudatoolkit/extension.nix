@@ -75,4 +75,6 @@ in
     hostLibstdcxxForStdenv = final.pkgs.pkgsHostTarget.stdenv.cc.cc.lib;
     ccForStdenv = final.pkgs."${finalVersion.gcc}Stdenv".cc.cc;
     baseStdenv = final.pkgs."${finalVersion.gcc}Stdenv";
+
+    saxpy = final.callPackage ./saxpy { };
 }
