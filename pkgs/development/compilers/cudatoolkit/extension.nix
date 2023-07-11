@@ -72,5 +72,5 @@ in
     # Cf. https://github.com/NixOS/nixpkgs/pull/225661#discussion_r1164564576
     nixpkgsCompatibleBuildLibstdcxx = final.pkgs.buildPackages.stdenv.cc.cc.lib;
     nixpkgsCompatibleHostLibstdcxx = final.pkgs.pkgsHostTarget.stdenv.cc.cc.lib;
-    nvccCompatibleCC = final.pkgs.buildPackages."${finalVersion.gcc}".cc;
+    nvccCompatibleCC = final.pkgs."${finalVersion.gcc}Stdenv".cc.cc;
 }
