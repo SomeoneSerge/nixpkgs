@@ -277,7 +277,6 @@ let
           sed -i 's@include/pybind11@pybind11@g' $src
         done
       '' + lib.optionalString cudaSupport ''
-        export NIX_LDFLAGS+=" -L${backendStdenv.nixpkgsCompatibleLibstdcxx}/lib"
         patchShebangs ../output/external/org_tensorflow/third_party/gpus/crosstool/clang/bin/crosstool_wrapper_driver_is_not_gcc.tpl
       '' + lib.optionalString stdenv.isDarwin ''
         # Framework search paths aren't added by bintools hook
