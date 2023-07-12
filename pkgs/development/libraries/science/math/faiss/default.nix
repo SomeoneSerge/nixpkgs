@@ -82,6 +82,7 @@ stdenv.mkDerivation {
 
   nativeBuildInputs = [ cmake ] ++ lib.optionals cudaSupport [
     buildPackages.cudaPackages.cuda_nvcc
+    cudaPackages.setupCudaPathsHook
     addOpenGLRunpath
   ] ++ lib.optionals pythonSupport [
     pythonPackages.python
