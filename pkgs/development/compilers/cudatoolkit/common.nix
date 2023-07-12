@@ -48,6 +48,7 @@ args@
 , rdma-core
 , ucx
 , rsync
+, targetPackages
 }:
 
 backendStdenv.mkDerivation rec {
@@ -89,7 +90,7 @@ backendStdenv.mkDerivation rec {
     qt6Packages.wrapQtAppsHook
   ];
   depsTargetTargetPropagated = [
-    setupCudaPathsHook
+    targetPackages.cudaPackages.setupCudaPathsHook
   ];
   buildInputs = lib.optionals (lib.versionOlder version "11") [
     libsForQt5.qt5.qtwebengine
