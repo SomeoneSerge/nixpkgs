@@ -88,7 +88,7 @@ backendStdenv.mkDerivation rec {
   ] ++ lib.optionals (lib.versionAtLeast version "11.8") [
     qt6Packages.wrapQtAppsHook
   ];
-  depsHostHostPropagated = [
+  depsTargetTargetPropagated = [
     setupCudaPathsHook
   ];
   buildInputs = lib.optionals (lib.versionOlder version "11") [
