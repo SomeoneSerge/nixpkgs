@@ -24,13 +24,13 @@ in
 
   cuda_nvcc = prev.cuda_nvcc.overrideAttrs (oldAttrs:
     let
-      cc = final.nvccCompatibleCC;
+      cc = final.ccForStdenv;
     in
     {
       env.cudartRoot = "${prev.lib.getDev final.cuda_cudart}";
       setupHook = ../hooks/nvcc-setup-hook.sh;
       buildInputs = oldAttrs.buildInputs ++ [
-        final.nixpkgsCompatibleBuildLibstdcxx
+        final.hostLibstdcxxForStdenv
       ];
 
       # Point NVCC at a compatible compiler

@@ -33,7 +33,7 @@ args@
 , pulseaudio
 , requireFile
 , setupCudaPathsHook
-, nixpkgsCompatibleHostLibstdcxx
+, hostLibstdcxxForStdenv
 , backendStdenv # E.g. gcc11Stdenv, set in extension.nix
 , unixODBC
 , wayland
@@ -162,7 +162,7 @@ backendStdenv.mkDerivation rec {
     (placeholder "lib")
     (placeholder "out")
     "${placeholder "out"}/nvvm"
-    "${nixpkgsCompatibleHostLibstdcxx}/lib64"
+    "${hostLibstdcxxForStdenv}/lib64"
     "${placeholder "out"}/jre/lib/amd64/jli"
     "${placeholder "out"}/lib64"
     "${placeholder "out"}/nvvm/lib64"
