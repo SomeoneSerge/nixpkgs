@@ -4,6 +4,7 @@
 , hostLibstdcxxForStdenv
 , ccForStdenv
 , stdenvAdapters
+, targetPlatform
 , wrapCCWith
 }:
 
