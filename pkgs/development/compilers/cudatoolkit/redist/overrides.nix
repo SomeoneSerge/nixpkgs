@@ -27,7 +27,7 @@ in
       cc = final.ccForStdenv;
     in
     {
-      env.cudartRoot = "${prev.lib.getDev final.pkgs.targetPackages.cudaPackages.cuda_cudart}";
+      env.cudartRoot = "${prev.lib.getDev (final.pkgs.targetPackages.cudaPackages.cuda_cudart or final.cuda_cudart)}";
       setupHook = ../hooks/nvcc-setup-hook.sh;
       buildInputs = oldAttrs.buildInputs ++ [
         final.hostLibstdcxxForStdenv
@@ -47,7 +47,7 @@ in
       # In practice, TargetTarget appears to work:
       # https://gist.github.com/fd80ff142cd25e64603618a3700e7f82
       depsTargetTargetPropagated = [
-        final.pkgs.targetPackages.cudaPackages.setupCudaPathsHook
+        final.pkgs.targetPackages.cudaPackages.setupCudaPathsHook or final.setupCudaPathsHook
       ];
     });
 

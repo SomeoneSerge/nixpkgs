@@ -3,6 +3,7 @@
 , fetchFromGitHub
 , symlinkJoin
 , stdenv
+, buildPackages
 , cmake
 , cudaPackages ? { }
 , cudaSupport ? config.cudaSupport or false
@@ -37,23 +38,6 @@ let
   inherit (cudaFlags) cudaCapabilities dropDot;
 
   stdenv = if cudaSupport then backendStdenv else inputs.stdenv;
-
-  cudaJoined = symlinkJoin {
-    name = "cuda-packages-unsplit";
-    paths = with cudaPackages; [
-      cuda_cudart # cuda_runtime.h
-      libcublas
-      libcurand
-    ] ++ lib.optionals useThrustSourceBuild [
-      nvidia-thrust
-    ] ++ lib.optionals (!useThrustSourceBuild) [
-      cuda_cccl
-    ] ++ lib.optionals (cudaPackages ? cuda_profiler_api) [
-      cuda_profiler_api # cuda_profiler_api.h
-    ] ++ lib.optionals (!(cudaPackages ? cuda_profiler_api)) [
-      cuda_nvprof # cuda_profiler_api.h
-    ];
-  };
 in
 stdenv.mkDerivation {
   inherit pname version;
@@ -77,15 +61,27 @@ stdenv.mkDerivation {
   ] ++ lib.optionals stdenv.cc.isClang [
     llvmPackages.openmp
   ] ++ lib.optionals cudaSupport [
-    cudaJoined
+    cudaPackages.cuda_cudart # cuda_runtime.h
+    cudaPackages.cuda_nvcc # <crt/host_defines.h>
+    cudaPackages.libcublas
+    cudaPackages.libcurand
+
+    # cuda_profiler_api.h
+    (cudaPackages.cuda_profiler_api or cudaPackages.cuda_nvprof)
+  ] ++ lib.optionals (cudaSupport && useThrustSourceBuild) [
+    nvidia-thrust
+  ] ++ lib.optionals (cudaSupport && !useThrustSourceBuild) [
+    cudaPackages.cuda_cccl
   ];
 
   propagatedBuildInputs = lib.optionals pythonSupport [
     pythonPackages.numpy
   ];
 
+  env.NIX_DEBUG = 6;
+
   nativeBuildInputs = [ cmake ] ++ lib.optionals cudaSupport [
-    cudaPackages.cuda_nvcc
+    buildPackages.cudaPackages.cuda_nvcc
     addOpenGLRunpath
   ] ++ lib.optionals pythonSupport [
     pythonPackages.python
@@ -95,13 +91,19 @@ stdenv.mkDerivation {
     pythonPackages.numpy
   ];
 
+  preConfigure = ''
+    echo CUDAToolkit_ROOT: $CUDAToolkit_ROOT
+    echo CUDAToolkit_INCLUDE_DIR: $CUDAToolkit_INCLUDE_DIR
+    echo buildInputs: $buildInputs
+    echo CUDAHOSTCXX: $CUDAHOSTCXX
+  '';
+
   cmakeFlags = [
     "-DFAISS_ENABLE_GPU=${if cudaSupport then "ON" else "OFF"}"
     "-DFAISS_ENABLE_PYTHON=${if pythonSupport then "ON" else "OFF"}"
     "-DFAISS_OPT_LEVEL=${optLevel}"
   ] ++ lib.optionals cudaSupport [
     "-DCMAKE_CUDA_ARCHITECTURES=${builtins.concatStringsSep ";" (map dropDot cudaCapabilities)}"
-    "-DCUDAToolkit_INCLUDE_DIR=${cudaJoined}/include"
   ];
 
 
