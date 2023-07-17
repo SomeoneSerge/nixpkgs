@@ -37,10 +37,6 @@ setupCUDAToolkitCompilers() {
     # uses the last --compiler-bindir it gets on the command line.
     # FIXME: this results in "incompatible redefinition" warnings.
     # https://docs.nvidia.com/cuda/cuda-compiler-driver-nvcc/index.html#compiler-bindir-directory-ccbin
-    # NOTE: We unconditionally set -Xfatbin=-compress-all, which reduces the size of the
-    #   compiled binaries. If binaries grow over 2GB, they will fail to link. This is a problem
-    #   for us, as the default set of CUDA capabilities we build can regularly cause this to
-    #   occur (for example, with Magma).
     if [ -z "${CUDAHOSTCXX-}" ]; then
       export CUDAHOSTCXX="@ccFullPath@";
     fi
