@@ -53,7 +53,7 @@ setupCUDAToolkitCompilers() {
     #   example, with Magma).
     #
     # @SomeoneSerge: original comment was made by @ConnorBaker in .../cudatoolkit/common.nix
-    if [[ -z "${dontUseNVCCXfatbin-}" ]]; then
+    if [[ -z "${dontCompressFatbin-}" ]]; then
         export NVCC_PREPEND_FLAGS+=" -Xfatbin=-compress-all"
     fi
 }
