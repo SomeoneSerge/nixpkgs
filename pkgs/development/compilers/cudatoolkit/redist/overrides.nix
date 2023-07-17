@@ -30,7 +30,7 @@ in
       env.cudartRoot = "${prev.lib.getDev (final.pkgs.targetPackages.cudaPackages.cuda_cudart or final.cuda_cudart)}";
       setupHook = ../hooks/nvcc-setup-hook.sh;
       buildInputs = oldAttrs.buildInputs ++ [
-        final.hostLibstdcxxForStdenv
+        final.gccForLibs.lib
       ];
 
       # Point NVCC at a compatible compiler

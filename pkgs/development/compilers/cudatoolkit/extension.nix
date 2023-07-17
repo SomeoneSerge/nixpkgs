@@ -71,10 +71,9 @@ in
     # for autopatchelf errors concerning libstdc++ and libgcc_s
     #
     # Cf. https://github.com/NixOS/nixpkgs/pull/225661#discussion_r1164564576
-    buildLibstdcxxForStdenv = final.pkgs.buildPackages.stdenv.cc.cc.lib;
-    hostLibstdcxxForStdenv = final.pkgs.pkgsHostTarget.stdenv.cc.cc.lib;
+    gccForLibs = final.pkgs.stdenv.cc.cc;
     ccForStdenv = final.pkgs."${finalVersion.gcc}Stdenv".cc.cc;
-    baseStdenv = final.pkgs."${finalVersion.gcc}Stdenv";
+    backendStdenvBase = final.pkgs.stdenv;
 
     saxpy = final.callPackage ./saxpy { };
 }

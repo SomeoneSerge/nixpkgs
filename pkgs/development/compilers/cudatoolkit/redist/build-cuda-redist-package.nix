@@ -1,12 +1,13 @@
 { lib
 , backendStdenv
+, cudaVersion
 , fetchurl
 , hostPlatform
 , autoPatchelfHook
 , autoAddOpenGLRunpathHook
 , manifestAttribute ? null
 , markForCudatoolkitRootHook
-, hostLibstdcxxForStdenv
+, gccForLibs
 }@inputs:
 
 pname:
@@ -70,7 +71,7 @@ backendStdenv.mkDerivation {
     # one that is compatible with the rest of nixpkgs, even when
     # nvcc forces us to use an older gcc
     # NB: We don't actually know if this is the right thing to do
-    hostLibstdcxxForStdenv
+    gccForLibs.lib
 
   ];
 
@@ -91,13 +92,12 @@ backendStdenv.mkDerivation {
     runHook postInstall
   '';
 
-  # Autopatchelfhook would only append
-  # "${nixpkgsCompatibleHostLibstdcxx}/lib" to the search path, but in case
-  # of x86_64-linux to aarch64-multiplatform compilation the correct location
-  # is "${nixpkgsCompatibleHostLibstdcxx}/aarch64-unknown-linux-gnu/lib"
+  # autoPatchelfHook would only append ".../lib" to the search path, but in
+  # case of x86_64-linux to aarch64-multiplatform compilation the correct
+  # location is ".../aarch64-unknown-linux-gnu/lib"
   preFixup = ''
-    if [[ -d "${hostLibstdcxxForStdenv}/${hostPlatform.config}" ]] ; then
-        addAutoPatchelfSearchPath "${hostLibstdcxxForStdenv}/${hostPlatform.config}"
+    if [[ -d "${gccForLibs.lib}/${hostPlatform.config}" ]] ; then
+        addAutoPatchelfSearchPath "${gccForLibs.lib}/${hostPlatform.config}"
     fi
   '';
 
