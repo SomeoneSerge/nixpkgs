@@ -1,6 +1,7 @@
 { backendStdenv
 , buildPackages
 , cmake
+, cuda_cccl
 , cuda_cudart
 , cudaFlags
 , cuda_nvcc
@@ -20,6 +21,7 @@ backendStdenv.mkDerivation {
   buildInputs = [
     libcublas
     cuda_cudart
+    cuda_cccl
   ];
   nativeBuildInputs = [
     cmake

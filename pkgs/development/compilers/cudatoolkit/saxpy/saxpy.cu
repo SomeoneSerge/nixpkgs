@@ -6,7 +6,7 @@
 
 static inline void check(cudaError_t err, const char *context) {
   if (err != cudaSuccess) {
-    fprintf(stderr, "CUDA error: %s: %s\n", context, cudaGetErrorString(err));
+    fprintf(stderr, "CUDA error at %s: %s\n", context, cudaGetErrorString(err));
     std::exit(EXIT_FAILURE);
   }
 }
@@ -23,7 +23,14 @@ int main(void) {
   setbuf(stderr, NULL);
   fprintf(stderr, "Start\n");
 
-  constexpr int N = 1 << 15;
+  int rtVersion, driverVersion;
+  CHECK(cudaRuntimeGetVersion(&rtVersion));
+  CHECK(cudaDriverGetVersion(&driverVersion));
+
+  fprintf(stderr, "Runtime version: %d\n", rtVersion);
+  fprintf(stderr, "Driver version: %d\n", driverVersion);
+
+  constexpr int N = 1 << 10;
 
   std::vector<float> xHost(N), yHost(N);
   for (int i = 0; i < N; i++) {
