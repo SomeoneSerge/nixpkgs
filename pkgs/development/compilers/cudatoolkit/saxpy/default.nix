@@ -1,12 +1,13 @@
 { backendStdenv
 , buildPackages
 , cmake
-, cuda_cccl
+, cuda_cccl ? null # Missing in cuda 11.4
 , cuda_cudart
 , cudaFlags
 , cuda_nvcc
+, cudaVersion
 , lib
-, libcublas
+, libcublas ? null
 , setupCudaPathsHook
 , stdenv
 , autoAddOpenGLRunpathHook
@@ -19,9 +20,10 @@ backendStdenv.mkDerivation {
   src = ./.;
 
   buildInputs = [
-    libcublas
     cuda_cudart
-    cuda_cccl
+  ] ++ lib.optionals (lib.versionOlder "11.4" cudaVersion) [
+    cuda_cccl # <nv/target>
+    libcublas
   ];
   nativeBuildInputs = [
     cmake
@@ -33,10 +35,10 @@ backendStdenv.mkDerivation {
   ];
 
   preConfigure = ''
-    echo "begin{env}"
+    echo "enter: env"
     env
-    echo "end{env}"
-    '';
+    echo "exit: env"
+  '';
 
   cmakeFlags = [
     "-DCMAKE_VERBOSE_MAKEFILE=ON"

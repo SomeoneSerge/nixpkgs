@@ -1,4 +1,3 @@
-#include <cublas_v2.h>
 #include <cuda_runtime.h>
 #include <vector>
 
@@ -21,7 +20,6 @@ __global__ void saxpy(int n, float a, float *x, float *y) {
 
 int main(void) {
   setbuf(stderr, NULL);
-  fprintf(stderr, "Start\n");
 
   int rtVersion, driverVersion;
   CHECK(cudaRuntimeGetVersion(&rtVersion));
@@ -30,7 +28,7 @@ int main(void) {
   fprintf(stderr, "Runtime version: %d\n", rtVersion);
   fprintf(stderr, "Driver version: %d\n", driverVersion);
 
-  constexpr int N = 1 << 10;
+  constexpr int N = 1 << 20;
 
   std::vector<float> xHost(N), yHost(N);
   for (int i = 0; i < N; i++) {
@@ -38,7 +36,6 @@ int main(void) {
     yHost[i] = 2.0f;
   }
 
-  fprintf(stderr, "Host memory initialized, copying to the device\n");
   fflush(stderr);
 
   float *xDevice, *yDevice;
@@ -49,10 +46,8 @@ int main(void) {
                    cudaMemcpyHostToDevice));
   CHECK(cudaMemcpy(yDevice, yHost.data(), N * sizeof(float),
                    cudaMemcpyHostToDevice));
-  fprintf(stderr, "Scheduled a cudaMemcpy, calling the kernel\n");
 
   saxpy<<<(N + 255) / 256, 256>>>(N, 2.0f, xDevice, yDevice);
-  fprintf(stderr, "Scheduled a kernel call\n");
   CHECK(cudaGetLastError());
 
   CHECK(cudaMemcpy(yHost.data(), yDevice, N * sizeof(float),
