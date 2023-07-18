@@ -1,3 +1,6 @@
+pname:
+attrs:
+
 { lib
 , backendStdenv
 , cudaVersion
@@ -9,9 +12,6 @@
 , markForCudatoolkitRootHook
 , gccForLibs
 }@inputs:
-
-pname:
-attrs:
 
 let
   systemToManifestAttribute = {
@@ -48,7 +48,7 @@ assert builtins.all
   (builtins.attrNames systemToManifestAttribute);
 
 backendStdenv.mkDerivation {
-  inherit pname;
+  pname = "${pname}-${cudaVersion}";
   inherit (attrs) version;
 
   src = fetchurl {

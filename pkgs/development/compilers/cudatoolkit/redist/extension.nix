@@ -18,13 +18,13 @@ final: prev: let
     "12.2" = ./manifests/redistrib_12.2.0.json;
   };
 
-  # Function to build a single cudatoolkit redist package
-  buildCudaToolkitRedistPackage = callPackage ./build-cuda-redist-package.nix { };
-
   # Function that builds all cudatoolkit redist packages given a cuda version and manifest file
-  buildCudaToolkitRedistPackages = { version, manifest }: let
-    attrs = lib.filterAttrs (key: value: key != "release_date") (lib.importJSON manifest);
-  in lib.mapAttrs buildCudaToolkitRedistPackage attrs;
+  buildCudaToolkitRedistPackages = { version, manifest }:
+    let
+      attrs = lib.filterAttrs (key: value: key != "release_date") (lib.importJSON manifest);
+      buildPkg = pname: pkgAttrs: callPackage (import ./build-cuda-redist-package.nix pname pkgAttrs) { };
+    in
+    lib.mapAttrs buildPkg attrs;
 
   # All cudatoolkit redist packages for the current cuda version
   cudaToolkitRedistPackages = lib.optionalAttrs (lib.hasAttr cudaVersion cudaToolkitRedistManifests)
