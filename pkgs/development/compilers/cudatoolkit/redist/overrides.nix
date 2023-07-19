@@ -27,9 +27,6 @@ in
       inherit (prev.backendStdenv) cc;
     in
     {
-      env.cudartRoot = "${prev.lib.getDev final.cuda_cudart}";
-      setupHook = ../hooks/nvcc-setup-hook.sh;
-
       # Point NVCC at a compatible compiler
 
       # Desiredata: whenever a package (e.g. magma) adds cuda_nvcc to

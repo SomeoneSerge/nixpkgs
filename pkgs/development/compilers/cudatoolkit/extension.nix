@@ -55,6 +55,7 @@ final: prev: let
           name = "setup-cuda-paths-hook";
           substitutions.ccRoot = "${backendStdenv.cc}";
           substitutions.ccFullPath = "${backendStdenv.cc}/bin/${backendStdenv.cc.targetPrefix}c++";
+          substitutions.cudartRoot = prev.lib.getDev final.cuda_cudart; # Doesn't account for cross-compilation yet
         }
         ./hooks/setup-cuda-paths-hook.sh)
     { });
