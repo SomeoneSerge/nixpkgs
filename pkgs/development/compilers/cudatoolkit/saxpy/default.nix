@@ -1,4 +1,5 @@
-{ backendStdenv
+{ autoAddOpenGLRunpathHook
+, backendStdenv
 , cmake
 , cuda_cccl
 , cuda_cudart
@@ -8,7 +9,6 @@
 , libcublas
 , setupCudaPathsHook
 , stdenv
-, autoAddOpenGLRunpathHook
 }:
 
 backendStdenv.mkDerivation {
