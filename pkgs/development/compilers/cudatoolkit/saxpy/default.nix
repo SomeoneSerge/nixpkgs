@@ -7,7 +7,7 @@
 , cuda_nvcc
 , lib
 , libcublas
-, setupCudaPathsHook
+, setupCudaHook
 , stdenv
 }:
 
@@ -32,7 +32,7 @@ backendStdenv.mkDerivation {
 
     # Alternatively, we could remove the propagated hook from cuda_nvcc and add
     # directly:
-    # setupCudaPathsHook
+    # setupCudaHook
     autoAddOpenGLRunpathHook
   ];
 
