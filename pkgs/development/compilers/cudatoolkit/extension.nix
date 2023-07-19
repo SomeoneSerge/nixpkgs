@@ -36,7 +36,7 @@ final: prev: let
     in
     buildCudaToolkitPackage attrs';
 
-  cudaFlags = final.callPackage ./flags.nix { };
+  cudaFlags = final.callPackage ./flags.nix {};
 
   # Internal hook, used by cudatoolkit and cuda redist packages
   # to accommodate automatic CUDAToolkit_ROOT construction
