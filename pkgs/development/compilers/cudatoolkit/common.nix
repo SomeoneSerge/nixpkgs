@@ -32,7 +32,7 @@ args@
 , python3 # FIXME: CUDAToolkit 10 may still need python27
 , pulseaudio
 , requireFile
-, setupCudaPathsHook
+, setupCudaHook
 , stdenv
 , backendStdenv # E.g. gcc11Stdenv, set in extension.nix
 , unixODBC
@@ -89,7 +89,7 @@ backendStdenv.mkDerivation rec {
     qt6Packages.wrapQtAppsHook
   ];
   depsTargetTargetPropagated = [
-    setupCudaPathsHook
+    setupCudaHook
   ];
   buildInputs = lib.optionals (lib.versionOlder version "11") [
     libsForQt5.qt5.qtwebengine

@@ -48,16 +48,16 @@ final: prev: let
     { });
 
   # Normally propagated by cuda_nvcc or cudatoolkit through their depsHostHostPropagated
-  setupCudaPathsHook = (final.callPackage
+  setupCudaHook = (final.callPackage
     ({ makeSetupHook, backendStdenv }:
       makeSetupHook
         {
-          name = "setup-cuda-paths-hook";
+          name = "setup-cuda-hook";
           substitutions.ccRoot = "${backendStdenv.cc}";
           substitutions.ccFullPath = "${backendStdenv.cc}/bin/${backendStdenv.cc.targetPrefix}c++";
           substitutions.cudartRoot = prev.lib.getDev final.cuda_cudart; # Doesn't account for cross-compilation yet
         }
-        ./hooks/setup-cuda-paths-hook.sh)
+        ./hooks/setup-cuda-hook.sh)
     { });
 
 in
@@ -67,5 +67,5 @@ in
     cudatoolkit
     cudaFlags
     markForCudatoolkitRootHook
-    setupCudaPathsHook;
+    setupCudaHook;
 }

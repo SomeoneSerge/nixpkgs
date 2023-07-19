@@ -41,7 +41,7 @@ in
       # In practice, TargetTarget appears to work:
       # https://gist.github.com/fd80ff142cd25e64603618a3700e7f82
       depsTargetTargetPropagated = [
-        final.setupCudaPathsHook
+        final.setupCudaHook
       ];
     });
 

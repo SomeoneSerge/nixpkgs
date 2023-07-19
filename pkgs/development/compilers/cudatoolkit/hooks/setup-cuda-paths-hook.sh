@@ -1,6 +1,6 @@
 # shellcheck shell=bash
 
-echo Sourcing setup-cuda-paths-hook >&2
+echo Sourcing setup-cuda-hook >&2
 
 extendCUDAToolkit_ROOT() {
     if [[ -f "$1/nix-support/include-in-cudatoolkit-root" ]] ; then
