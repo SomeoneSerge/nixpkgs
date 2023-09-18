@@ -7,6 +7,7 @@
 
 { blas
 , cmake
+, buildPackages
 , cudaPackages
   # FIXME: cuda being unfree means ofborg won't eval "magma".
   # respecting config.cudaSupport -> false by default
@@ -96,7 +97,7 @@ let
     name = "cuda-native-redist-${cudaVersion}";
     paths = with cudaPackages; [
       cuda_cudart # cuda_runtime.h
-      cuda_nvcc
+      buildPackages.cudaPackages.cuda_nvcc
     ] ++ lists.optionals (strings.versionOlder cudaVersion "11.8") [
       cuda_nvprof # <cuda_profiler_api.h>
     ] ++ lists.optionals (strings.versionAtLeast cudaVersion "11.8") [

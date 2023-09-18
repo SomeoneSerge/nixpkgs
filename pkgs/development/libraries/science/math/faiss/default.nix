@@ -3,6 +3,7 @@
 , fetchFromGitHub
 , symlinkJoin
 , stdenv
+, buildPackages
 , cmake
 , cudaPackages ? { }
 , cudaSupport ? config.cudaSupport or false
@@ -85,7 +86,7 @@ stdenv.mkDerivation {
   ];
 
   nativeBuildInputs = [ cmake ] ++ lib.optionals cudaSupport [
-    cudaPackages.cuda_nvcc
+    buildPackages.cudaPackages.cuda_nvcc
     addOpenGLRunpath
   ] ++ lib.optionals pythonSupport [
     pythonPackages.python
@@ -95,7 +96,15 @@ stdenv.mkDerivation {
     pythonPackages.numpy
   ];
 
+  preConfigure = ''
+    echo PATH: $PATH
+    echo cmakeFlags: $cmakeFlags
+    echo CC: $CC
+    echo CXX: $CXX
+  '';
+
   cmakeFlags = [
+    "-DCMAKE_VERBOSE_MAKEFILE=ON"
     "-DFAISS_ENABLE_GPU=${if cudaSupport then "ON" else "OFF"}"
     "-DFAISS_ENABLE_PYTHON=${if pythonSupport then "ON" else "OFF"}"
     "-DFAISS_OPT_LEVEL=${optLevel}"

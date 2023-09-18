@@ -9,6 +9,7 @@
 , tbb
 , hostSystem ? "CPP"
 , deviceSystem ? if config.cudaSupport or false then "CUDA" else "OMP"
+, buildPackages
 }:
 
 # Policy for device_vector<T>
@@ -37,10 +38,11 @@ let
   cudaJoined = symlinkJoin {
     name = "cuda-packages-unsplit";
     paths = with cudaPackages; [
-      cuda_nvcc
+      buildPackages.cudaPackages.cuda_nvcc
       cuda_nvrtc # symbols: cudaLaunchDevice, &c; notice postBuild
       cuda_cudart # cuda_runtime.h
       libcublas
+      cuda_cccl # <nv/target>
     ];
     postBuild = ''
       ln -s $out/lib $out/lib64
