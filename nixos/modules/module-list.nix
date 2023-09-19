@@ -225,6 +225,7 @@
   ./programs/nexttrace.nix
   ./programs/nix-index.nix
   ./programs/nix-ld.nix
+  ./programs/nix-required-mounts.nix
   ./programs/nm-applet.nix
   ./programs/nncp.nix
   ./programs/noisetorch.nix
