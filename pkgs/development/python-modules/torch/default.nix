@@ -12,6 +12,10 @@
   MPISupport ? false, mpi,
   buildDocs ? false,
 
+  # tests.cudaAvailable:
+  callPackage,
+  torch,
+
   # Native build inputs
   cmake, linkFarm, symlinkJoin, which, pybind11, removeReferencesTo,
   pythonRelaxDepsHook,
@@ -488,11 +492,16 @@ in buildPythonPackage rec {
 
   passthru = {
     inherit cudaSupport cudaPackages;
+    cudaCapabilities = if cudaSupport then supportedCudaCapabilities else [ ];
     # At least for 1.10.2 `torch.fft` is unavailable unless BLAS provider is MKL. This attribute allows for easy detection of its availability.
     blasProvider = blas.provider;
     # To help debug when a package is broken due to CUDA support
     inherit brokenConditions;
-    cudaCapabilities = if cudaSupport then supportedCudaCapabilities else [ ];
+  } // lib.optionalAttrs cudaSupport {
+
+    tests = lib.optionalAttrs cudaSupport {
+      cudaAvailable = callPackage ./test-cuda.nix { inherit torch; };
+    };
   };
 
   meta = with lib; {
