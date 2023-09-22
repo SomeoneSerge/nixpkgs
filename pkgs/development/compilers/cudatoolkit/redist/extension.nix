@@ -47,7 +47,7 @@ let
   inherit (builtins) attrNames concatMap hasAttr listToAttrs removeAttrs;
   inherit (final) callPackage;
   inherit (prev) cudaVersion;
-  inherit (prev.lib.attrsets) nameValuePair optionalAttrs;
+  inherit (prev.lib.attrsets) genAttrs nameValuePair optionalAttrs;
   inherit (prev.lib.lists) optionals;
   inherit (prev.lib.trivial) flip importJSON pipe;
 
@@ -100,14 +100,11 @@ let
   # Function that builds all redist packages given manifests
   buildRedistPackages = { features, manifest }:
     let
-      wrapper = pname:
+      pnameToDrv = pname:
         let
           # Get the redist architectures the package provides distributables for
           packageAttrs = manifest.${pname};
-
-          # Check if supported
-          # TODO(@connorbaker): Currently hardcoding x86_64-linux as the only supported platform.
-          isSupported = packageAttrs ? linux-x86_64;
+          packageFeatureAttrs = features.${pname};
 
           # Build the derivation
           drv = buildRedistPackage {
@@ -115,21 +112,15 @@ let
             # TODO(@connorbaker): We currently discard the license attribute.
             inherit (manifest.${pname}) version;
             description = manifest.${pname}.name;
-            platforms = [ "x86_64-linux" ];
-            releaseAttrs = manifest.${pname}.linux-x86_64;
-            releaseFeaturesAttrs = features.${pname}.linux-x86_64;
+            inherit packageAttrs packageFeatureAttrs;
           };
-
-          # Wrap in an optional so we can filter out the empty lists created by unsupported
-          # packages with concatMap.
-          wrapped = optionals isSupported [ (nameValuePair pname drv) ];
         in
-        wrapped;
+        drv;
 
       # concatMap provides us an easy way to filter out packages for unsupported platforms.
       # We wrap the buildRedistPackage call in a list to prevent errors when the package is not
       # supported (by returning an empty list).
-      redistPackages = listToAttrs (concatMap wrapper (attrNames manifest));
+      redistPackages = genAttrs (attrNames manifest) pnameToDrv;
     in
     redistPackages;
 

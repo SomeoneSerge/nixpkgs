@@ -11,6 +11,7 @@
 , fetchurl
 , autoPatchelfHook
 , autoAddOpenGLRunpathHook
+, cudaFlags
 , markForCudatoolkitRootHook
 , lndir
 , symlinkJoin
@@ -23,23 +24,84 @@
 , # Long package name (e.g., "CXX Core Compute Libraries")
   # description : String
   description
-, # platforms : List System
-  platforms
 , # version : Version
   version
-, # releaseAttrs : ReleaseAttrs
-  releaseAttrs
-, # releaseFeaturesAttrs : ReleaseFeaturesAttrs
-  releaseFeaturesAttrs
+, # packageAttrs : PackageAttrs
+  packageAttrs
+, # packageFeatureAttrs : PackageFeatureAttrs
+  packageFeatureAttrs
 ,
 }:
 let
   # Useful imports
+  inherit (builtins) attrNames head filter;
   inherit (lib.lists) optionals;
+  inherit (lib.attrsets) optionalAttrs;
   inherit (lib.meta) getExe;
   inherit (lib.strings) optionalString;
+
+  # TODO: Take those from the manifest instead
+  # TODO: Provide a way to ignore the gencodes and choose the release manually
+  gencodesDiscrete = [
+    "3.0"
+    "3.5"
+    "3.7"
+    "5.0"
+    "5.2"
+    "6.0"
+    "6.1"
+    "7.0"
+    "7.5"
+    "8.0"
+    "8.6"
+    "8.9"
+    "9.0"
+  ];
+  gencodesJetson = [
+    "3.2"
+    "5.3"
+    "6.2"
+    "7.2"
+    "8.7"
+  ];
+  hostOnlyPnames = [
+    "cuda_nvcc"
+    "cuda_cudart"
+  ];
+  platformMap = {
+    linux-x86_64.system = "x86_64-linux";
+    linux-x86_64.gencodes = gencodesDiscrete;
+
+    linux-sbsa.system = "aarch64-linux";
+    linux-sbsa.gencodes = gencodesDiscrete;
+
+    linux-aarch64.system = "aarch64-linux";
+    linux-aarch64.gencodes = gencodesJetson;
+
+    linux-ppc64le.system = "powerpc64le-linux";
+    linux-ppc64le.gencodes = gencodesDiscrete;
+
+    windows-x86_64.system = "x86_64-windows";
+    windows-x86_64.gencodes = gencodesDiscrete;
+  };
+  platforms = builtins.map
+    (releaseName: platformMap.${releaseName}.system)
+    (attrNames packageFeatureAttrs);
+
+  releaseNames = attrNames packageFeatureAttrs;
+  supportsHost = releaseName: (platformMap.${releaseName}.system or null) == stdenv.hostPlatform.system;
+  suppliesGencodes = releaseName:
+    builtins.all
+      (sm:
+        let gencodes = platformMap.${releaseName}.gencodes or [ ];
+        in gencodes == [ ] || builtins.elem pname hostOnlyPnames || builtins.elem sm gencodes)
+      cudaFlags.cudaCapabilities;
+  supportedReleases = filter (release: builtins.all (test: test release) [ supportsHost suppliesGencodes ]) releaseNames;
+  isSupported = supportedReleases != [ ];
+  release = head supportedReleases;
+
 in
-backendStdenv.mkDerivation {
+backendStdenv.mkDerivation (optionalAttrs isSupported {
   # NOTE: Even though there's no actual buildPhase going on here, the derivations of the
   # redistributables are sensitive to the compiler flags provided to stdenv. The patchelf package
   # is sensitive to the compiler flags provided to stdenv, and we depend on it. As such, we are
@@ -47,7 +109,7 @@ backendStdenv.mkDerivation {
   inherit pname version;
   strictDeps = true;
 
-  outputs = with releaseFeaturesAttrs;
+  outputs = with packageFeatureAttrs.${release};
     [ "out" ]
     ++ optionals hasBin [ "bin" ]
     ++ optionals hasLib [ "lib" ]
@@ -57,8 +119,8 @@ backendStdenv.mkDerivation {
     ++ optionals hasSample [ "sample" ];
 
   src = fetchurl {
-    url = "https://developer.download.nvidia.com/compute/cuda/redist/${releaseAttrs.relative_path}";
-    inherit (releaseAttrs) sha256;
+    url = "https://developer.download.nvidia.com/compute/cuda/redist/${packageAttrs.${release}.relative_path}";
+    inherit (packageAttrs.${release}) sha256;
   };
 
   # We do need some other phases, like configurePhase, so the multiple-output setup hook works.
@@ -88,7 +150,7 @@ backendStdenv.mkDerivation {
     "$ORIGIN"
   ];
 
-  installPhase = with releaseFeaturesAttrs;
+  installPhase = with packageFeatureAttrs.${release};
     # Pre-install hook
     ''
       runHook preInstall
@@ -147,9 +209,6 @@ backendStdenv.mkDerivation {
     done
   '';
 
-  # Make the CUDA-patched stdenv available
-  passthru.stdenv = backendStdenv;
-
   # Setting propagatedBuildInputs to false will prevent outputs known to the multiple-outputs
   # from depending on `out` by default.
   # https://github.com/NixOS/nixpkgs/blob/2920b6fc16a9ed5d51429e94238b28306ceda79e/pkgs/build-support/setup-hooks/multiple-outputs.sh#L196
@@ -163,12 +222,17 @@ backendStdenv.mkDerivation {
   # unqualified (that is, without an explicit output).
   outputSpecified = true;
 
+} //  {
+  # Make the CUDA-patched stdenv available
+  passthru.stdenv = backendStdenv;
+  passthru.supportedReleases = supportedReleases;
   meta = {
     inherit description platforms;
+    broken = !isSupported;
     license = lib.licenses.unfree;
     maintainers = lib.teams.cuda.members;
     # Force the use of the default, fat output by default (even though `dev` exists, which
     # causes Nix to prefer that output over the others if outputSpecified isn't set).
     outputsToInstall = [ "out" ];
   };
-}
+})
