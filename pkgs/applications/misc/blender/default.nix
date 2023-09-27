@@ -1,4 +1,4 @@
-{ config, stdenv, lib, fetchurl, fetchzip, boost, cmake, ffmpeg, gettext, glew
+{ config, stdenv, lib, fetchFromGitea, fetchzip, boost, cmake, ffmpeg, gettext, glew
 , ilmbase, libepoxy, libXi, libX11, libXext, libXrender
 , libjpeg, libpng, libsamplerate, libsndfile
 , libtiff, libwebp, libGLU, libGL, openal, opencolorio, openexr, openimagedenoise, openimageio, openjpeg, python310Packages
@@ -33,9 +33,12 @@ stdenv.mkDerivation (finalAttrs: rec {
   pname = "blender";
   version = "3.6.5";
 
-  src = fetchurl {
-    url = "https://download.blender.org/source/${pname}-${version}.tar.xz";
-    hash = "sha256-QAHA/pn22HLsfH6VX4Sp7r25raFxAPS1Gergjez38kM=";
+  src = fetchFromGitea {
+    domain = "projects.blender.org";
+    owner = "blender";
+    repo = "blender";
+    rev = "v${version}";
+    hash = "sha256-U8z+xjz0vAZ9pUvRpVzcCcXfOvDmpFUPuOkgUvVwNow=";
   };
 
   patches = [
