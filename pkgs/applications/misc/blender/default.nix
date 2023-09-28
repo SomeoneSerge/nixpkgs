@@ -21,28 +21,43 @@
 }:
 
 let
+  blenderVersion = "3.6.5";
   python = python310Packages.python;
   optix = fetchzip {
     # url taken from the archlinux blender PKGBUILD
     url = "https://developer.download.nvidia.com/redist/optix/v7.3/OptiX-7.3.0-Include.zip";
     sha256 = "0max1j4822mchj0xpz9lqzh91zkmvsn4py0r174cvqfz8z8ykjk8";
   };
+  blender-addons = fetchFromGitea {
+    domain = "projects.blender.org";
+    owner = "blender";
+    repo = "blender-addons";
+    rev = "v${blenderVersion}";
+    hash = "sha256-K4jbWuWaXtSjEqbmZC+7SnsNUJCcru1U1HuI4LCuuGM=";
+
+    postFetch = "patch -p3 -d $out < ${./draco-p2.patch}";
+  };
 
 in
 stdenv.mkDerivation (finalAttrs: rec {
   pname = "blender";
-  version = "3.6.5";
+  version = "${blenderVersion}";
 
   src = fetchFromGitea {
     domain = "projects.blender.org";
     owner = "blender";
     repo = "blender";
-    rev = "v${version}";
+    rev = "v${blenderVersion}";
     hash = "sha256-U8z+xjz0vAZ9pUvRpVzcCcXfOvDmpFUPuOkgUvVwNow=";
   };
 
+  prePatch = ''
+    mkdir scripts/addons
+    cp -Rv ${blender-addons}/* scripts/addons
+  '';
+
   patches = [
-    ./draco.patch
+    ./draco-p1.patch
   ] ++ lib.optional stdenv.isDarwin ./darwin.patch;
 
   nativeBuildInputs =
