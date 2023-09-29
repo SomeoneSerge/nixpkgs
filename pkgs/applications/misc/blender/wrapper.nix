@@ -2,7 +2,6 @@
 , lib
 , blender
 , makeWrapper
-, python3Packages
 }:
 { name ? "wrapped"
 , packages ? []
@@ -12,7 +11,7 @@ stdenv.mkDerivation {
   inherit (blender) version;
   src = blender;
 
-  nativeBuildInputs = [ python3Packages.wrapPython makeWrapper ];
+  nativeBuildInputs = [ blender.python.pkgs.wrapPython makeWrapper ];
   installPhase = ''
     mkdir $out/{share/applications,bin} -p
     sed 's/Exec=blender/Exec=blender-${name}/g' $src/share/applications/blender.desktop > $out/share/applications/blender-${name}.desktop

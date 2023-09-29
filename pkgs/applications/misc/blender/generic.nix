@@ -1,11 +1,11 @@
 { config, stdenv, lib, fetchFromGitea, fetchzip, boost, cmake, ffmpeg, gettext, glew
 , ilmbase, libepoxy, libXi, libX11, libXext, libXrender
 , libjpeg, libpng, libsamplerate, libsndfile
-, libtiff, libwebp, libGLU, libGL, openal, opencolorio, openexr, openimagedenoise, openimageio, openjpeg, python310Packages
+, libtiff, libwebp, libGLU, libGL, openal, opencolorio, openexr, openimagedenoise, openimageio, openjpeg
 , openvdb, libXxf86vm, tbb, alembic
 , zlib, zstd, fftw, opensubdiv, freetype, jemalloc, ocl-icd, addOpenGLRunpath
 , jackaudioSupport ? false, libjack2
-, cudaSupport ? config.cudaSupport, cudaPackages ? { }
+, cudaSupport ? config.cudaSupport, cudaPackages
 , hipSupport ? false, rocmPackages # comes with a significantly larger closure size
 , colladaSupport ? true, opencollada
 , spaceNavSupport ? stdenv.isLinux, libspnav
@@ -18,52 +18,63 @@
 , openpgl
 , mesa
 , runCommand
+, version, hashes, isLTS, python, withPackages, xvfb-run
 }:
 
 let
-  blenderVersion = "3.6.5";
-  python = python310Packages.python;
   optix = fetchzip {
     # url taken from the archlinux blender PKGBUILD
+    # Using OptiX SDK 7.3 according to build instructions
+    # https://wiki.blender.org/wiki/Building_Blender/GPU_Binaries
     url = "https://developer.download.nvidia.com/redist/optix/v7.3/OptiX-7.3.0-Include.zip";
-    sha256 = "0max1j4822mchj0xpz9lqzh91zkmvsn4py0r174cvqfz8z8ykjk8";
+    hash = "sha256-aMrp0Uff4c3ICRn4S6zedf6Q4Mc0/duBhKwKgYgMXVU=";
   };
   blender-addons = fetchFromGitea {
     domain = "projects.blender.org";
     owner = "blender";
     repo = "blender-addons";
-    rev = "v${blenderVersion}";
-    hash = "sha256-K4jbWuWaXtSjEqbmZC+7SnsNUJCcru1U1HuI4LCuuGM=";
+    rev = "v${version}";
+    hash = hashes.addons;
 
-    postFetch = "patch -p3 -d $out < ${./draco-p2.patch}";
+    postFetch = ''
+      patch -p3 -d $out < ${./draco-p2.patch}
+    '';
   };
 
 in
 stdenv.mkDerivation (finalAttrs: rec {
   pname = "blender";
-  version = "${blenderVersion}";
+  inherit version;
 
   src = fetchFromGitea {
     domain = "projects.blender.org";
     owner = "blender";
     repo = "blender";
-    rev = "v${blenderVersion}";
-    hash = "sha256-U8z+xjz0vAZ9pUvRpVzcCcXfOvDmpFUPuOkgUvVwNow=";
+    rev = "v${version}";
+    hash = hashes.blender;
+
+    # Blender 3.3 uses submodules, but 3.5+ doesnt.
+    # See https://projects.blender.org/blender/blender/pulls/104755
+    fetchSubmodules = lib.versionOlder version "3.5";
   };
 
-  prePatch = ''
+  prePatch = if lib.versionAtLeast version "3.5" then ''
     mkdir scripts/addons
     cp -Rv ${blender-addons}/* scripts/addons
-  '';
+  '' else ''
+    cp -Rv ${blender-addons}/* release/scripts/addons
+'';
 
   patches = [
     ./draco-p1.patch
   ] ++ lib.optional stdenv.isDarwin ./darwin.patch;
 
-  nativeBuildInputs =
-    [ cmake makeWrapper python310Packages.wrapPython llvmPackages.llvm.dev
-    ]
-    ++ lib.optionals cudaSupport [ addOpenGLRunpath ]
+  nativeBuildInputs = [
+    cmake
+    makeWrapper
+    python.pkgs.wrapPython
+    llvmPackages.llvm.dev
+  ] ++ lib.optionals cudaSupport [ addOpenGLRunpath ]
     ++ lib.optionals waylandSupport [ pkg-config ];
   buildInputs =
     [ boost ffmpeg gettext glew ilmbase
@@ -101,11 +112,9 @@ stdenv.mkDerivation (finalAttrs: rec {
     ++ lib.optional cudaSupport cudaPackages.cudatoolkit
     ++ lib.optional colladaSupport opencollada
     ++ lib.optional spaceNavSupport libspnav;
-  pythonPath = with python310Packages; [ numpy requests zstandard ];
+  pythonPath = with python.pkgs; [ numpy requests zstandard ];
 
-  postPatch = ''
-  '' +
-    (if stdenv.isDarwin then ''
+  postPatch = (if stdenv.isDarwin then ''
       : > build_files/cmake/platform/platform_apple_xcode.cmake
       substituteInPlace source/creator/CMakeLists.txt \
         --replace '${"$"}{LIBDIR}/python' \
@@ -116,13 +125,14 @@ stdenv.mkDerivation (finalAttrs: rec {
         --replace '${"$"}{LIBDIR}/opencollada' \
                   '${opencollada}' \
         --replace '${"$"}{PYTHON_LIBPATH}/site-packages/numpy' \
-                  '${python310Packages.numpy}/${python.sitePackages}/numpy'
+                  '${python.pkgs.numpy}/${python.sitePackages}/numpy'
     '' else ''
       substituteInPlace extern/clew/src/clew.c --replace '"libOpenCL.so"' '"${ocl-icd}/lib/libOpenCL.so"'
     '') +
     (lib.optionalString hipSupport ''
-      substituteInPlace extern/hipew/src/hipew.c --replace '"/opt/rocm/hip/lib/libamdhip64.so"' '"${rocmPackages.clr}/lib/libamdhip64.so"'
-      substituteInPlace extern/hipew/src/hipew.c --replace '"opt/rocm/hip/bin"' '"${rocmPackages.clr}/bin"'
+      substituteInPlace extern/hipew/src/hipew.c \
+        --replace '"/opt/rocm/hip/lib/libamdhip64.so"' '"${rocmPackages.clr}/lib/libamdhip64.so"' \
+        --replace '"opt/rocm/hip/bin"' '"${rocmPackages.clr}/bin"'
     '');
 
   cmakeFlags =
@@ -145,8 +155,8 @@ stdenv.mkDerivation (finalAttrs: rec {
       "-DPYTHON_VERSION=${python.pythonVersion}"
       "-DWITH_PYTHON_INSTALL=OFF"
       "-DWITH_PYTHON_INSTALL_NUMPY=OFF"
-      "-DPYTHON_NUMPY_PATH=${python310Packages.numpy}/${python.sitePackages}"
-      "-DPYTHON_NUMPY_INCLUDE_DIRS=${python310Packages.numpy}/${python.sitePackages}/numpy/core/include"
+      "-DPYTHON_NUMPY_PATH=${python.pkgs.numpy}/${python.sitePackages}"
+      "-DPYTHON_NUMPY_INCLUDE_DIRS=${python.pkgs.numpy}/${python.sitePackages}/numpy/core/include"
       "-DWITH_PYTHON_INSTALL_REQUESTS=OFF"
       "-DWITH_OPENVDB=ON"
       "-DWITH_TBB=ON"
@@ -207,7 +217,7 @@ stdenv.mkDerivation (finalAttrs: rec {
   '';
 
   passthru = {
-    inherit python;
+    inherit python isLTS withPackages;
 
     tests = {
       render = runCommand "${pname}-test" { } ''
@@ -230,9 +240,8 @@ stdenv.mkDerivation (finalAttrs: rec {
 
         mkdir $out
         for engine in BLENDER_EEVEE CYCLES; do
-          echo "Rendering with $engine..."
           # Beware that argument order matters
-          ${finalAttrs.finalPackage}/bin/blender \
+          arguments=$(cat <<'  ARGS'
             --background \
             -noaudio \
             --factory-startup \
@@ -241,6 +250,18 @@ stdenv.mkDerivation (finalAttrs: rec {
             --engine "$engine" \
             --render-output "$out/$engine" \
             --render-frame 1
+          ARGS)
+
+          echo "Rendering with $engine..."
+
+          # Blender doesn't support headless rendering on EEVEE before 3.4
+          if [ ${if lib.versionOlder version "3.4" then "0" else "1"} -eq 0 ] && [ $engine == "BLENDER_EEVEE" ]
+          then
+            echo "Using xfvb workaround..."
+            eval "${xvfb-run}/bin/xvfb-run ${finalAttrs.finalPackage}/bin/blender $arguments"
+          else
+            eval "${finalAttrs.finalPackage}/bin/blender $arguments"
+          fi
         done
       '';
     };
