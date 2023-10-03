@@ -1,4 +1,5 @@
 { lib
+, callPackage
 , config
 , stdenv
 , fetchFromGitHub
@@ -96,6 +97,8 @@ stdenv.mkDerivation (finalAttrs: {
 
     runHook postInstall
   '';
+
+  passthru.tests.test-cuda = callPackage ./test-cuda.nix { };
 
   meta = with lib; {
     description = "High-performance library for gradient boosting on decision trees";
