@@ -64,6 +64,10 @@
         machine.succeed("test -e /mnt/ipfs/config")
         machine.succeed("test ! -e /var/lib/ipfs/")
 
+    with subtest("Simple `ipfs id` succeeds, regardless of --mount"):
+        machine.succeed("su alice -l -c 'ipfs id'")
+        fuse.succeed("su bob -l -c 'ipfs id'")
+
     with subtest("FUSE mountpoint"):
         fuse.fail("echo a | su bob -l -c 'ipfs add --quieter'")
         # The FUSE mount functionality is broken as of v0.13.0 and v0.17.0.
