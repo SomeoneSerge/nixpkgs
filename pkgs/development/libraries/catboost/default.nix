@@ -17,6 +17,9 @@
 , pythonSupport ? false
 }:
 
+let
+  inherit (cudaPackages.cudaFlags) dropDot cudaCapabilities;
+in
 stdenv.mkDerivation (finalAttrs: {
   pname = "catboost";
   version = "1.2.2";
@@ -83,6 +86,7 @@ stdenv.mkDerivation (finalAttrs: {
     "-DCATBOOST_COMPONENTS=app;libs${lib.optionalString pythonSupport ";python-package"}"
   ] ++ lib.optionals cudaSupport [
     "-DHAVE_CUDA=on"
+    "-DCMAKE_CUDA_ARCHITECTURES=${lib.concatStringsSep ";" (builtins.map dropDot cudaCapabilities)}"
   ];
 
   installPhase = ''
