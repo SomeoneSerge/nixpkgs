@@ -106,6 +106,7 @@ stdenv.mkDerivation {
     gfortran
   ] ++ lists.optionals cudaSupport [
     cudaPackages.cuda_nvcc
+    cudaPackages.autoAddOpenGLRunpathHook
   ];
 
   buildInputs = [
