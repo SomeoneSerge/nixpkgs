@@ -13,6 +13,7 @@
   Accelerate, CoreServices, libobjc,
 
   # Propagated build inputs
+  fsspec,
   filelock,
   jinja2,
   networkx,
@@ -117,7 +118,7 @@ let
 in buildPythonPackage rec {
   pname = "torch";
   # Don't forget to update torch-bin to the same version.
-  version = "2.0.1";
+  version = "2.1.0";
   format = "setuptools";
 
   disabled = pythonOlder "3.8.0";
@@ -133,7 +134,7 @@ in buildPythonPackage rec {
     repo = "pytorch";
     rev = "refs/tags/v${version}";
     fetchSubmodules = true;
-    hash = "sha256-xUj77yKz3IQ3gd/G32pI4OhL3LoN1zS7eFg0/0nZp5I=";
+    hash = "sha256-4Ha9hQ+0o+ZQp0QdmtugYfaXSzZIzpA6HFhwWJzVLhk=";
   };
 
   patches = lib.optionals (stdenv.isDarwin && stdenv.isx86_64) [
@@ -306,6 +307,7 @@ in buildPythonPackage rec {
       cuda_nvrtc.lib
       cuda_nvtx.dev
       cuda_nvtx.lib # -llibNVToolsExt
+      cudatoolkit
       cudnn.dev
       cudnn.lib
       libcublas.dev
@@ -336,6 +338,7 @@ in buildPythonPackage rec {
     pyyaml
 
     # From install_requires:
+    fsspec
     filelock
     typing-extensions
     sympy
