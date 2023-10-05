@@ -2,9 +2,12 @@
 , buildPythonPackage
 , fetchFromGitHub
 , cmake
+, symlinkJoin
+, ffmpeg-full
 , pkg-config
 , ninja
 , pybind11
+, sox
 , torch
 , cudaSupport ? torch.cudaSupport
 , cudaPackages
@@ -12,13 +15,13 @@
 
 buildPythonPackage rec {
   pname = "torchaudio";
-  version = "2.0.2";
+  version = "2.1.0";
 
   src = fetchFromGitHub {
     owner = "pytorch";
     repo = "audio";
     rev = "v${version}";
-    hash = "sha256-9lB4gLXq0nXHT1+DNOlbJQqNndt2I6kVoNwhMO/2qlE=";
+    hash = "sha256-Ag1xLDEowyN586hlvVb24/notpRum+UsgMqWoZqFchs=";
   };
 
   postPatch = ''
@@ -31,6 +34,16 @@ buildPythonPackage rec {
     TORCH_CUDA_ARCH_LIST = "${lib.concatStringsSep ";" torch.cudaCapabilities}";
   };
 
+  # https://github.com/pytorch/audio/blob/v2.1.0/docs/source/build.linux.rst#optional-build-torchaudio-with-a-custom-built-ffmpeg
+  FFMPEG_ROOT = symlinkJoin {
+    name = "ffmpeg";
+    paths = [
+      ffmpeg-full.bin
+      ffmpeg-full.dev
+      ffmpeg-full.lib
+    ];
+  };
+
   nativeBuildInputs = [
     cmake
     pkg-config
@@ -38,8 +51,11 @@ buildPythonPackage rec {
   ] ++ lib.optionals cudaSupport [
     cudaPackages.cuda_nvcc
   ];
+
   buildInputs = [
+    ffmpeg-full
     pybind11
+    sox
   ] ++ lib.optionals cudaSupport [
     cudaPackages.libcurand.dev
     cudaPackages.libcurand.lib
@@ -47,11 +63,13 @@ buildPythonPackage rec {
     cudaPackages.cuda_cccl.dev # <thrust/*>
     cudaPackages.cuda_nvtx.dev
     cudaPackages.cuda_nvtx.lib # -llibNVToolsExt
+    cudaPackages.cudatoolkit
     cudaPackages.libcublas.dev
     cudaPackages.libcublas.lib
     cudaPackages.libcufft.dev
     cudaPackages.libcufft.lib
   ];
+
   propagatedBuildInputs = [
     torch
   ];
