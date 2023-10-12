@@ -276,7 +276,7 @@ stdenv.mkDerivation (finalAttrs: rec {
     license = with licenses; [ gpl2Plus ] ++ optional cudaSupport unfree;
     platforms = [ "x86_64-linux" "x86_64-darwin" "aarch64-linux" ];
     broken = stdenv.isDarwin;
-    maintainers = with maintainers; [ goibhniu veprbl ];
+    maintainers = with maintainers; [ goibhniu veprbl hubble ];
     mainProgram = "blender";
   };
 })
