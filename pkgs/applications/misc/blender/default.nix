@@ -237,6 +237,16 @@ stdenv.mkDerivation (finalAttrs: rec {
             --render-frame 1
         done
       '';
+
+      cudaAvailable = runCommand
+      "blender-cuda-available"
+      {
+        nativeBuildInputs = [ finalAttrs.finalPackage ];
+        requiredSystemFeatures = [ "cuda" ];
+      }
+      ''
+        blender --background -noaudio --python-exit-code 1 --python ${./test-cuda.py} && touch $out
+      '';
     };
   };
 
