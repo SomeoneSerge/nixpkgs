@@ -307,7 +307,6 @@ in buildPythonPackage rec {
       cuda_nvrtc.lib
       cuda_nvtx.dev
       cuda_nvtx.lib # -llibNVToolsExt
-      cudatoolkit
       cudnn.dev
       cudnn.lib
       libcublas.dev
