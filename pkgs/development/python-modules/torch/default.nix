@@ -152,7 +152,12 @@ in buildPythonPackage rec {
     })
   ];
 
-  postPatch = lib.optionalString rocmSupport ''
+  postPatch = ''
+    rm cmake/Modules/FindCUDAToolkit.cmake
+    substituteInPlace cmake/public/cuda.cmake \
+      --replace "CUDA_INCLUDE_DIRS STREQUAL CUDAToolkit_INCLUDE_DIR" "CUDA_INCLUDE_DIRS IN_LIST CUDAToolkit_INCLUDE_DIR" \
+      --replace "find_package(CUDAToolkit REQUIRED)" "find_package(CUDAToolkit REQUIRED COMPONENTS nvToolsExt)"
+  '' + lib.optionalString rocmSupport ''
     # https://github.com/facebookincubator/gloo/pull/297
     substituteInPlace third_party/gloo/cmake/Hipify.cmake \
       --replace "\''${HIPIFY_COMMAND}" "python \''${HIPIFY_COMMAND}"
