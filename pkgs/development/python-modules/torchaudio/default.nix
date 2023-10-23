@@ -63,7 +63,6 @@ buildPythonPackage rec {
     cudaPackages.cuda_cccl.dev # <thrust/*>
     cudaPackages.cuda_nvtx.dev
     cudaPackages.cuda_nvtx.lib # -llibNVToolsExt
-    cudaPackages.cudatoolkit
     cudaPackages.libcublas.dev
     cudaPackages.libcublas.lib
     cudaPackages.libcufft.dev
