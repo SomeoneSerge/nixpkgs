@@ -126,6 +126,8 @@ in buildPythonPackage rec {
 
   disabled = pythonOlder "3.8.0";
 
+  stdenv = effectiveStdenv;
+
   outputs = [
     "out" # output standard python package
     "dev" # output libtorch headers
@@ -220,8 +222,6 @@ in buildPythonPackage rec {
     # https://github.com/pytorch/pytorch/blob/a4391f085bff409dca93a8b3eff8e379f0ef8f68/scripts/get_python_cmake_flags.py#L20-L21
     "-DPYTHON_EXECUTABLE:FILEPATH=${lib.getExe python}"
     "-DPYTHON_INCLUDE_DIR:FILEPATH=${lib.getDev python}/include/python${python.pythonVersion}"
-    "-DCMAKE_CXX_COMPILER=${effectiveStdenv.cc}/bin/${effectiveStdenv.cc.targetPrefix}c++"
-    "-DCMAKE_C_COMPILER=${effectiveStdenv.cc}/bin/${effectiveStdenv.cc.targetPrefix}cc"
   ];
 
   # Keep these two lines close because they're entangled.
