@@ -12,8 +12,6 @@ extendCUDAToolkit_ROOT() {
     fi
 }
 
-addEnvHooks "$targetOffset" extendCUDAToolkit_ROOT
-
 setupCUDAToolkitCompilers() {
     echo Executing setupCUDAToolkitCompilers >&2
 
@@ -64,5 +62,11 @@ setupCMakeCUDAToolkit_ROOT() {
     export cmakeFlags+=" -DCUDAToolkit_INCLUDE_DIR=$CUDAToolkit_INCLUDE_DIR -DCUDAToolkit_ROOT=$CUDAToolkit_ROOT"
 }
 
-postHooks+=(setupCUDAToolkitCompilers)
-preConfigureHooks+=(setupCMakeCUDAToolkit_ROOT)
+if [[ -z ${SETUP_CUDA_HOOK_SOURCED+x} ]]; then
+    export SETUP_CUDA_HOOK_SOURCED=1
+    addEnvHooks "$targetOffset" extendCUDAToolkit_ROOT
+    postHooks+=(setupCUDAToolkitCompilers)
+    preConfigureHooks+=(setupCMakeCUDAToolkit_ROOT)
+else
+    echo "Attempted to source setup-cuda-hook again"
+fi
