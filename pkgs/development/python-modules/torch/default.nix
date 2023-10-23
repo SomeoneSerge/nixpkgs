@@ -212,8 +212,22 @@ in buildPythonPackage rec {
     python tools/amd_build/build_amd.py
   '';
 
-  # Use pytorch's custom configurations
-  dontUseCmakeConfigure = true;
+  cmakeFlags = [
+    "-G Ninja"
+    # https://github.com/pytorch/pytorch/blob/a4391f085bff409dca93a8b3eff8e379f0ef8f68/scripts/get_python_cmake_flags.py#L20-L21
+    "-DPYTHON_EXECUTABLE:FILEPATH=${lib.getExe python}"
+    "-DPYTHON_INCLUDE_DIR:FILEPATH=${lib.getDev python}/include/python${python.pythonVersion}"
+  ];
+
+  # Keep these two lines close because they're entangled.
+  # We first let the cmake hook run the cmake configurePhase, which changes the
+  # directory to build/, and then we cd back and let the python hook run as
+  # usual. This way we can control the cmakeFlags and ensure e.g. CUDA is
+  # configured correctly.
+  dontUseCmakeConfigure = false;
+  postConfigure = ''
+    cd ..
+  '';
 
   # causes possible redefinition of _FORTIFY_SOURCE
   hardeningDisable = [ "fortify3" ];
