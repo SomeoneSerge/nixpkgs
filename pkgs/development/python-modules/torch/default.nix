@@ -45,13 +45,16 @@
   # ROCm dependencies
   rocmSupport ? false,
   gpuTargets ? [ ], rocmPackages
-}:
+}@inputs:
 
 let
   inherit (lib) attrsets lists strings trivial;
   inherit (cudaPackages) cudaFlags cudnn nccl;
 
   setBool = v: if v then "1" else "0";
+
+  effectiveStdenv = if cudaSupport then cudaPackages.backendStdenv else inputs.stdenv;
+  stdenv = throw "torch: Use effectiveStdenv instead of inputs.stdenv";
 
   # https://github.com/pytorch/pytorch/blob/v2.0.1/torch/utils/cpp_extension.py#L1744
   supportedTorchCudaCapabilities =
@@ -110,7 +113,7 @@ let
 
   brokenConditions = attrsets.filterAttrs (_: cond: cond) {
     "CUDA and ROCm are not mutually exclusive" = cudaSupport && rocmSupport;
-    "CUDA is not targeting Linux" = cudaSupport && !stdenv.isLinux;
+    "CUDA is not targeting Linux" = cudaSupport && !effectiveStdenv.isLinux;
     "Unsupported CUDA version" = cudaSupport && !(builtins.elem cudaPackages.cudaMajorVersion [ "11" "12" ]);
     "MPI cudatoolkit does not match cudaPackages.cudatoolkit" = MPISupport && cudaSupport && (mpi.cudatoolkit != cudaPackages.cudatoolkit);
     "Magma cudaPackages does not match cudaPackages" = cudaSupport && (magma.cudaPackages != cudaPackages);
@@ -137,14 +140,14 @@ in buildPythonPackage rec {
     hash = "sha256-4Ha9hQ+0o+ZQp0QdmtugYfaXSzZIzpA6HFhwWJzVLhk=";
   };
 
-  patches = lib.optionals (stdenv.isDarwin && stdenv.isx86_64) [
+  patches = lib.optionals (effectiveStdenv.isDarwin && effectiveStdenv.isx86_64) [
     # pthreadpool added support for Grand Central Dispatch in April
     # 2020. However, this relies on functionality (DISPATCH_APPLY_AUTO)
     # that is available starting with macOS 10.13. However, our current
     # base is 10.12. Until we upgrade, we can fall back on the older
     # pthread support.
     ./pthreadpool-disable-gcd.diff
-  ] ++ lib.optionals stdenv.isLinux [
+  ] ++ lib.optionals effectiveStdenv.isLinux [
     # Propagate CUPTI to Kineto by overriding the search path with environment variables.
     (fetchpatch {
       url = "https://github.com/pytorch/pytorch/pull/108847/commits/7ae4d7c0e2dec358b4fe81538efe9da5eb580ec9.patch";
@@ -188,7 +191,7 @@ in buildPythonPackage rec {
   ''
   # error: no member named 'aligned_alloc' in the global namespace; did you mean simply 'aligned_alloc'
   # This lib overrided aligned_alloc hence the error message. Tltr: his function is linkable but not in header.
-  + lib.optionalString (stdenv.isDarwin && lib.versionOlder stdenv.targetPlatform.darwinSdkVersion "11.0") ''
+  + lib.optionalString (effectiveStdenv.isDarwin && lib.versionOlder effectiveStdenv.targetPlatform.darwinSdkVersion "11.0") ''
     substituteInPlace third_party/pocketfft/pocketfft_hdronly.h --replace '#if __cplusplus >= 201703L
     inline void *aligned_alloc(size_t align, size_t size)' '#if __cplusplus >= 201703L && 0
     inline void *aligned_alloc(size_t align, size_t size)'
@@ -217,6 +220,8 @@ in buildPythonPackage rec {
     # https://github.com/pytorch/pytorch/blob/a4391f085bff409dca93a8b3eff8e379f0ef8f68/scripts/get_python_cmake_flags.py#L20-L21
     "-DPYTHON_EXECUTABLE:FILEPATH=${lib.getExe python}"
     "-DPYTHON_INCLUDE_DIR:FILEPATH=${lib.getDev python}/include/python${python.pythonVersion}"
+    "-DCMAKE_CXX_COMPILER=${effectiveStdenv.cc}/bin/${effectiveStdenv.cc.targetPrefix}c++"
+    "-DCMAKE_C_COMPILER=${effectiveStdenv.cc}/bin/${effectiveStdenv.cc.targetPrefix}cc"
   ];
 
   # Keep these two lines close because they're entangled.
@@ -289,14 +294,14 @@ in buildPythonPackage rec {
   # Suppress gcc regression: avx512 math function raises uninitialized variable warning
   # https://gcc.gnu.org/bugzilla/show_bug.cgi?id=105593
   # See also: Fails to compile with GCC 12.1.0 https://github.com/pytorch/pytorch/issues/77939
-  ++ lib.optionals (stdenv.cc.isGNU && lib.versionAtLeast stdenv.cc.version "12.0.0") [
+  ++ lib.optionals (effectiveStdenv.cc.isGNU && lib.versionAtLeast effectiveStdenv.cc.version "12.0.0") [
     "-Wno-error=maybe-uninitialized"
     "-Wno-error=uninitialized"
   ]
   # Since pytorch 2.0:
   # gcc-12.2.0/include/c++/12.2.0/bits/new_allocator.h:158:33: error: ‘void operator delete(void*, std::size_t)’
   # ... called on pointer ‘<unknown>’ with nonzero offset [1, 9223372036854775800] [-Werror=free-nonheap-object]
-  ++ lib.optionals (stdenv.cc.isGNU && lib.versions.major stdenv.cc.version == "12" ) [
+  ++ lib.optionals (effectiveStdenv.cc.isGNU && lib.versions.major effectiveStdenv.cc.version == "12" ) [
     "-Wno-error=free-nonheap-object"
   ]));
 
@@ -314,7 +319,7 @@ in buildPythonPackage rec {
   ++ lib.optionals rocmSupport [ rocmtoolkit_joined ];
 
   buildInputs = [ blas blas.provider pybind11 ]
-    ++ lib.optionals stdenv.isLinux [ linuxHeaders_5_19 ] # TMP: avoid "flexible array member" errors for now
+    ++ lib.optionals effectiveStdenv.isLinux [ linuxHeaders_5_19 ] # TMP: avoid "flexible array member" errors for now
     ++ lib.optionals cudaSupport (with cudaPackages; [
       cuda_cccl.dev # <thrust/*>
       cuda_cudart # cuda_runtime.h and libraries
@@ -346,8 +351,8 @@ in buildPythonPackage rec {
     ])
     ++ lib.optionals rocmSupport [ rocmPackages.llvm.openmp ]
     ++ lib.optionals (cudaSupport || rocmSupport) [ magma ]
-    ++ lib.optionals stdenv.isLinux [ numactl ]
-    ++ lib.optionals stdenv.isDarwin [ Accelerate CoreServices libobjc ];
+    ++ lib.optionals effectiveStdenv.isLinux [ numactl ]
+    ++ lib.optionals effectiveStdenv.isDarwin [ Accelerate CoreServices libobjc ];
 
   propagatedBuildInputs = [
     cffi
@@ -408,7 +413,7 @@ in buildPythonPackage rec {
   ];
 
   postInstall = ''
-    find "$out/${python.sitePackages}/torch/include" "$out/${python.sitePackages}/torch/lib" -type f -exec remove-references-to -t ${stdenv.cc} '{}' +
+    find "$out/${python.sitePackages}/torch/include" "$out/${python.sitePackages}/torch/lib" -type f -exec remove-references-to -t ${effectiveStdenv.cc} '{}' +
 
     mkdir $dev
     cp -r $out/${python.sitePackages}/torch/include $dev/include
@@ -434,7 +439,7 @@ in buildPythonPackage rec {
       --replace "/build/source/torch/include" "$dev/include"
   '';
 
-  postFixup = lib.optionalString stdenv.isDarwin ''
+  postFixup = lib.optionalString effectiveStdenv.isDarwin ''
     for f in $(ls $lib/lib/*.dylib); do
         install_name_tool -id $lib/lib/$(basename $f) $f || true
     done
