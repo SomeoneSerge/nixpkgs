@@ -2,7 +2,6 @@
 , lib
 , beautifulsoup4
 , blender
-, blender-with-packages
 , boxx
 , bpycv
 , buildPythonPackage
@@ -53,7 +52,7 @@ buildPythonPackage rec {
         rev = "6ce0e65c107d572011394da16ffdf851e988dbb4";
       };
       nativeBuildInputs = [
-        ((blender-with-packages.override {inherit blender python3Packages;}) {
+        (blender.withPackages {
           packages = [ bpycv ];
         })
       ];
