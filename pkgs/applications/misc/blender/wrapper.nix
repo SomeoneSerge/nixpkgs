@@ -2,10 +2,9 @@
 , lib
 , blender
 , makeWrapper
+, extraModules ? []
 }:
-{ name ? "wrapped"
-, packages ? []
-}:
+{ name ? "wrapped" }:
 stdenv.mkDerivation {
   pname = "blender-${name}";
   inherit (blender) version;
@@ -26,7 +25,7 @@ stdenv.mkDerivation {
       --prefix PYTHONPATH : $program_PYTHONPATH
   '';
 
-  pythonPath = packages;
+  pythonPath = extraModules;
 
   meta = blender.meta;
 }

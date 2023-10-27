@@ -12,9 +12,11 @@ let
   latestStable = lib.last (builtins.sort lib.versionOlder (builtins.attrNames versions));
   latestLTS = lib.last (builtins.sort lib.versionOlder (builtins.attrNames (lib.filterAttrs (_: v: v.isLTS == true) versions)));
 
+  buildEnv = callPackage ./wrapper.nix {};
+
   packages =
     lib.mapAttrs'
-    (version: content: {
+    (version: content: rec {
       name = "blender_${version}";
       value = callPackage ./generic.nix {
         inherit (darwin.apple_sdk.frameworks) Cocoa CoreGraphics ForceFeedback OpenAL OpenGL;
@@ -26,9 +28,7 @@ let
         # Like "VFX_RefCY": "2024", which outlines python 3.11, qt 6.5+ etc
         python = python310;
 
-        withPackages = callPackage ./wrapper.nix {
-          blender = packages."blender_${version}";
-        };
+        withPackages = f: let packages = f value.python.pkgs; in buildEnv.override { blender = value; extraModules = packages; };
 
         inherit (content) version hashes isLTS;
       };
