@@ -7299,8 +7299,10 @@ with pkgs;
   cudaPackages_12_2 = callPackage ./cuda-packages.nix { cudaVersion = "12.2"; };
   cudaPackages_12 = cudaPackages_12_1; # Latest supported by cudnn
 
-  # TODO: try upgrading once there is a cuDNN release supporting CUDA 12. No
-  # such cuDNN release as of 2023-01-10.
+  # Use the older cudaPackages for tensorflow and jax, as determined by cudnn
+  # compatibility: https://www.tensorflow.org/install/source#gpu
+  cudaPackagesGoogle = recurseIntoAttrs cudaPackages_11;
+
   cudaPackages = recurseIntoAttrs cudaPackages_12;
 
   # TODO: move to alias
