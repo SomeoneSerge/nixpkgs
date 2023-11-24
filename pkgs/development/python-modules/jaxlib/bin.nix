@@ -29,11 +29,11 @@
 , stdenv
   # Options:
 , cudaSupport ? config.cudaSupport
-, cudaPackages ? {}
+, cudaPackagesGoogle
 }:
 
 let
-  inherit (cudaPackages) cudatoolkit cudnn;
+  inherit (cudaPackagesGoogle) cudatoolkit cudnn;
 in
 
 assert cudaSupport -> lib.versionAtLeast cudatoolkit.version "11.1" && lib.versionAtLeast cudnn.version "8.2" && stdenv.isLinux;
