@@ -8,26 +8,28 @@
 , cudnn
 }:
 
-{ fullVersion
+{ enable ? true
+, fullVersion
 , fileVersionCudnn ? null
 , tarball
 , sha256
 , supportedCudaVersions ? [ ]
 }:
 
-assert fileVersionCudnn == null || lib.assertMsg (lib.strings.versionAtLeast cudnn.version fileVersionCudnn)
+assert !enable || fileVersionCudnn == null || lib.assertMsg (lib.strings.versionAtLeast cudnn.version fileVersionCudnn)
   "This version of TensorRT requires at least cuDNN ${fileVersionCudnn} (current version is ${cudnn.version})";
 
-backendStdenv.mkDerivation rec {
+backendStdenv.mkDerivation (finalAttrs: {
   pname = "cudatoolkit-${cudatoolkit.majorVersion}-tensorrt";
   version = fullVersion;
-  src = requireFile rec {
+  src = if !finalAttrs.enable then null else
+  requireFile rec {
     name = tarball;
     inherit sha256;
     message = ''
       To use the TensorRT derivation, you must join the NVIDIA Developer Program and
-      download the ${version} Linux x86_64 TAR package for CUDA ${cudaVersion} from
-      ${meta.homepage}.
+      download the ${finalAttrs.version} Linux x86_64 TAR package for CUDA ${cudaVersion} from
+      ${finalAttrs.meta.homepage}.
 
       Once you have downloaded the file, add it to the store with the following
       command, and try building this derivation again.
@@ -38,19 +40,19 @@ backendStdenv.mkDerivation rec {
 
   outputs = [ "out" "dev" ];
 
-  nativeBuildInputs = [
+  nativeBuildInputs = lib.optionals finalAttrs.enable [
     autoPatchelfHook
     autoAddOpenGLRunpathHook
   ];
 
   # Used by autoPatchelfHook
-  buildInputs = [
+  buildInputs = lib.optionals finalAttrs.enable [
     backendStdenv.cc.cc.lib # libstdc++
     cudatoolkit
     cudnn
   ];
 
-  sourceRoot = "TensorRT-${version}";
+  sourceRoot = "TensorRT-${finalAttrs.version}";
 
   installPhase = ''
     install --directory "$dev" "$out"
@@ -64,7 +66,7 @@ backendStdenv.mkDerivation rec {
   postFixup =
     let
       mostOfVersion = builtins.concatStringsSep "."
-        (lib.take 3 (lib.versions.splitVersion version));
+        (lib.take 3 (lib.versions.splitVersion finalAttrs.version));
     in
     ''
       echo 'Patching RPATH of libnvinfer libs'
@@ -75,6 +77,7 @@ backendStdenv.mkDerivation rec {
     '';
 
   passthru.stdenv = backendStdenv;
+  passthru.enable = enable;
 
   meta = with lib; {
     # Check that the cudatoolkit version satisfies our min/max constraints (both
@@ -82,11 +85,11 @@ backendStdenv.mkDerivation rec {
     # official version constraints (as recorded in default.nix). In some cases
     # you _may_ be able to smudge version constraints, just know that you're
     # embarking into unknown and unsupported territory when doing so.
-    broken = !(elem cudaVersion supportedCudaVersions);
+    broken = !enable || !(elem cudaVersion supportedCudaVersions);
     description = "TensorRT: a high-performance deep learning interface";
     homepage = "https://developer.nvidia.com/tensorrt";
     license = licenses.unfree;
     platforms = [ "x86_64-linux" ];
     maintainers = with maintainers; [ aidalgol ];
   };
-}
+})
