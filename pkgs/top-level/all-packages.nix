@@ -7302,7 +7302,7 @@ with pkgs;
 
   # TODO: try upgrading once there is a cuDNN release supporting CUDA 12. No
   # such cuDNN release as of 2023-01-10.
-  cudaPackages = recurseIntoAttrs cudaPackages_11;
+  cudaPackages = recurseIntoAttrs cudaPackages_12;
 
   # TODO: move to alias
   cudatoolkit = cudaPackages.cudatoolkit;
