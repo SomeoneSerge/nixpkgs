@@ -7302,7 +7302,7 @@ with pkgs;
 
   # Use the older cudaPackages for tensorflow and jax, as determined by cudnn
   # compatibility: https://www.tensorflow.org/install/source#gpu
-  cudaPackagesGoogle = recurseIntoAttrs cudaPackages_11;
+  cudaPackagesGoogle = cudaPackages_11;
 
   cudaPackages = recurseIntoAttrs cudaPackages_12;
 
