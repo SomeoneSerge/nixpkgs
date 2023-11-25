@@ -19,17 +19,17 @@
 assert !enable || fileVersionCudnn == null || lib.assertMsg (lib.strings.versionAtLeast cudnn.version fileVersionCudnn)
   "This version of TensorRT requires at least cuDNN ${fileVersionCudnn} (current version is ${cudnn.version})";
 
-backendStdenv.mkDerivation (finalAttrs: {
+backendStdenv.mkDerivation rec {
   pname = "cudatoolkit-${cudatoolkit.majorVersion}-tensorrt";
   version = fullVersion;
-  src = if !finalAttrs.enable then null else
+  src = if !enable then null else
   requireFile rec {
     name = tarball;
     inherit sha256;
     message = ''
       To use the TensorRT derivation, you must join the NVIDIA Developer Program and
-      download the ${finalAttrs.version} Linux x86_64 TAR package for CUDA ${cudaVersion} from
-      ${finalAttrs.meta.homepage}.
+      download the ${version} Linux x86_64 TAR package for CUDA ${cudaVersion} from
+      ${meta.homepage}.
 
       Once you have downloaded the file, add it to the store with the following
       command, and try building this derivation again.
@@ -40,19 +40,19 @@ backendStdenv.mkDerivation (finalAttrs: {
 
   outputs = [ "out" "dev" ];
 
-  nativeBuildInputs = lib.optionals finalAttrs.enable [
+  nativeBuildInputs = lib.optionals enable [
     autoPatchelfHook
     autoAddOpenGLRunpathHook
   ];
 
   # Used by autoPatchelfHook
-  buildInputs = lib.optionals finalAttrs.enable [
+  buildInputs = lib.optionals enable [
     backendStdenv.cc.cc.lib # libstdc++
     cudatoolkit
     cudnn
   ];
 
-  sourceRoot = "TensorRT-${finalAttrs.version}";
+  sourceRoot = "TensorRT-${version}";
 
   installPhase = ''
     install --directory "$dev" "$out"
@@ -66,7 +66,7 @@ backendStdenv.mkDerivation (finalAttrs: {
   postFixup =
     let
       mostOfVersion = builtins.concatStringsSep "."
-        (lib.take 3 (lib.versions.splitVersion finalAttrs.version));
+        (lib.take 3 (lib.versions.splitVersion version));
     in
     ''
       echo 'Patching RPATH of libnvinfer libs'
@@ -92,4 +92,4 @@ backendStdenv.mkDerivation (finalAttrs: {
     platforms = [ "x86_64-linux" ];
     maintainers = with maintainers; [ aidalgol ];
   };
-})
+}

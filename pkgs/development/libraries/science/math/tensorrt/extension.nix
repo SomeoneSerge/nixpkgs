@@ -17,6 +17,10 @@ final: prev: let
     isSupported = fileData: elem cudaVersion fileData.supportedCudaVersions;
     # Return the first file that is supported. In practice there should only ever be one anyway.
     supportedFile = files: findFirst isSupported null files;
+
+    # Compute versioned attribute name to be used in this package set
+    computeName = version: "tensorrt_${toUnderscore version}";
+
     # Supported versions with versions as keys and file as value
     supportedVersions = lib.recursiveUpdate
       {
@@ -24,21 +28,20 @@ final: prev: let
           enable = false;
           fileVersionCuda = null;
           fileVersionCudnn = null;
-          fullVersion = null;
+          fullVersion = "0.0.0";
           sha256 = null;
           tarball = null;
           supportedCudaVersions = [ ];
         };
       }
-      (filterAttrs (version: file: file != null) (mapAttrs (version: files: supportedFile files) tensorRTVersions));
-    # Compute versioned attribute name to be used in this package set
-    computeName = version: "tensorrt_${toUnderscore version}";
+      (mapAttrs' (version: attrs: nameValuePair (computeName version) attrs)
+        (filterAttrs (version: file: file != null) (mapAttrs (version: files: supportedFile files) tensorRTVersions)));
 
     # Add all supported builds as attributes
-    allBuilds = mapAttrs' (version: file: nameValuePair (computeName version) (buildTensorRTPackage (removeAttrs file ["fileVersionCuda"]))) supportedVersions;
-    defaultName = computeName tensorRTDefaultVersion;
+    allBuilds = mapAttrs (name: file: buildTensorRTPackage (removeAttrs file ["fileVersionCuda"])) supportedVersions;
 
     # Set the default attributes, e.g. tensorrt = tensorrt_8_4;
+    defaultName = computeName tensorRTDefaultVersion;
     defaultBuild = lib.optionalAttrs (allBuilds ? ${defaultName}) { tensorrt = allBuilds.${computeName tensorRTDefaultVersion}; };
   in {
     inherit buildTensorRTPackage;
