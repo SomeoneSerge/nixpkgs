@@ -150,6 +150,14 @@ in
       wantedBy = [ "multi-user.target" ];
       restartTriggers = [ clamdConfigFile ];
 
+      preStart = ''
+        if [[ ! -d "${stateDir}" ]] ; then
+            echo "The state directory, ${stateDir}, doesn't exist." >&2
+            echo 'You need to run `freshclam` or set `services.clamav.updater.enable` first.' >&2
+            exit 1
+        fi
+      '';
+
       serviceConfig = {
         ExecStart = "${pkg}/bin/clamd";
         ExecReload = "${pkgs.coreutils}/bin/kill -USR2 $MAINPID";
