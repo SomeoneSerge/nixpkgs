@@ -51,11 +51,15 @@ in
     ]
   );
 
-  cuda_nvcc = prev.cuda_nvcc.overrideAttrs (_: {
+  cuda_nvcc = prev.cuda_nvcc.overrideAttrs (oldAttrs: {
     # One'd expect this should be depsHostHostPropagated, but that doesn't work
     propagatedBuildInputs = [
       final.setupCudaHook
     ];
+
+    meta = (oldAttrs.meta or { }) // {
+      mainProgram = "nvcc";
+    };
   });
 
   cuda_nvprof = prev.cuda_nvprof.overrideAttrs (oldAttrs: {
