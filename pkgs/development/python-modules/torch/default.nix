@@ -8,7 +8,7 @@
   magma-hip,
   magma-cuda-static,
   useSystemNccl ? true,
-  MPISupport ? false, mpi,
+  MPISupport ? cudaSupport, mpi,
   buildDocs ? false,
 
   # Native build inputs
