@@ -52,7 +52,7 @@ backendStdenv.mkDerivation {
     ))
   ];
 
-  passthru.tests.withCuda = saxpy.overrideAttrs (
+  passthru.gpuChecks.withCuda = saxpy.overrideAttrs (
     _: {
       requiredSystemFeatures = ["cuda"];
       doInstallCheck = true;

@@ -31,7 +31,7 @@ buildPythonPackage rec {
   doCheck = false;  # no tests in PyPi dist
   pythonImportsCheck = [ "pynvml" "pynvml.smi" ];
 
-  passthru.tests.nvmlInit = callPackage ./test-gpu.nix { };
+  passthru.gpuChecks.nvmlInit = callPackage ./test-gpu.nix { };
 
   meta = with lib; {
     description = "Python bindings for the NVIDIA Management Library";
