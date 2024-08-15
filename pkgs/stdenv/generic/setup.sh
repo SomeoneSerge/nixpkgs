@@ -400,8 +400,14 @@ concatTo() {
                 -a*)
                     targetref+=( "${nameref[@]}" ) ;;
                 *)
-                    # shellcheck disable=SC2206
-                    targetref+=( ${nameref-} ) ;;
+                    if [[ "$name" = *"Array" ]]; then
+                        nixErrorLog "concatTo(): $name is not declared as array, treating as a singleton. This will become an error in future"
+                        targetref+=( "${nameref-}" )
+                    else
+                        # shellcheck disable=SC2206
+                        targetref+=( ${nameref-} )
+                    fi
+                    ;;
             esac
         fi
     done
