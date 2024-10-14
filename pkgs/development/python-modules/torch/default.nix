@@ -35,10 +35,8 @@
   removeReferencesTo,
 
   # Build inputs
+  darwin,
   numactl,
-  Accelerate,
-  CoreServices,
-  libobjc,
 
   # Propagated build inputs
   astunparse,
@@ -240,6 +238,7 @@ buildPythonPackage rec {
       # Allow setting PYTHON_LIB_REL_PATH with an environment variable.
       # https://github.com/pytorch/pytorch/pull/128419
       ./passthrough-python-lib-rel-path.patch
+      ./0001-cmake.py-propagate-cmakeFlags-from-environment.patch
     ]
     ++ lib.optionals cudaSupport [ ./fix-cmake-cuda-toolkit.patch ]
     ++ lib.optionals (stdenv.hostPlatform.isDarwin && stdenv.hostPlatform.isx86_64) [
@@ -257,7 +256,18 @@ buildPythonPackage rec {
     ];
 
   postPatch =
-    lib.optionalString rocmSupport ''
+    ''
+      substituteInPlace cmake/public/cuda.cmake \
+        --replace-fail \
+          'message(FATAL_ERROR "Found two conflicting CUDA' \
+          'message(WARNING "Found two conflicting CUDA' \
+        --replace-warn \
+          "set(CUDAToolkit_ROOT" \
+          "# Upstream: set(CUDAToolkit_ROOT"
+      substituteInPlace third_party/gloo/cmake/Cuda.cmake \
+        --replace-warn "find_package(CUDAToolkit 7.0" "find_package(CUDAToolkit"
+    ''
+    + lib.optionalString rocmSupport ''
       # https://github.com/facebookincubator/gloo/pull/297
       substituteInPlace third_party/gloo/cmake/Hipify.cmake \
         --replace "\''${HIPIFY_COMMAND}" "python \''${HIPIFY_COMMAND}"
@@ -350,6 +360,17 @@ buildPythonPackage rec {
 
   # NB technical debt: building without NNPACK as workaround for missing `six`
   USE_NNPACK = 0;
+
+  cmakeFlags =
+    [
+      # (lib.cmakeBool "CMAKE_FIND_DEBUG_MODE" true)
+      (lib.cmakeFeature "CUDAToolkit_VERSION" cudaPackages.cudaVersion)
+    ]
+    ++ lib.optionals cudaSupport [
+      # Unbreaks version discovery in enable_language(CUDA) when wrapping nvcc with ccache
+      # Cf. https://gitlab.kitware.com/cmake/cmake/-/issues/26363
+      (lib.cmakeFeature "CMAKE_CUDA_COMPILER_TOOLKIT_VERSION" cudaPackages.cudaVersion)
+    ];
 
   preBuild = ''
     export MAX_JOBS=$NIX_BUILD_CORES
@@ -495,9 +516,9 @@ buildPythonPackage rec {
     ++ lib.optionals (cudaSupport || rocmSupport) [ effectiveMagma ]
     ++ lib.optionals stdenv.hostPlatform.isLinux [ numactl ]
     ++ lib.optionals stdenv.hostPlatform.isDarwin [
-      Accelerate
-      CoreServices
-      libobjc
+      darwin.apple_sdk.frameworks.Accelerate
+      darwin.apple_sdk.frameworks.CoreServices
+      darwin.libobjc
     ]
     ++ lib.optionals tritonSupport [ triton ]
     ++ lib.optionals MPISupport [ mpi ]
