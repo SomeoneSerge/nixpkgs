@@ -9,7 +9,10 @@
 }:
 
 let
-  manifests =
+  snapshots = lib.mapAttrs (_: mkManifests) known;
+  manifests = snapshots.prehistoric;
+  mkManifests =
+    { includeManifests, outputHash }:
     runCommand "manifests"
       rec {
         __structuredAttrs = true;
@@ -40,6 +43,7 @@ let
             dbIfd
             ifdManifestPaths
             known
+            snapshots
             ;
           inherit exportOld;
           exportNew =
