@@ -34,7 +34,7 @@ let
         # inherit (known."2025-05-23") includeManifests outputHash;
 
         # Use the smaller subset on nixos-unstable (e.g. discards pre-11.4 cuda)
-        inherit (known."prehistoric") includeManifests outputHash;
+        inherit includeManifests outputHash;
         outputHashMode = "recursive";
         outputHashAlgo = "sha256";
 
